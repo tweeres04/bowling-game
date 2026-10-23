@@ -5,6 +5,7 @@ import {
 import { newGame, shoot } from "@/app/actions";
 import { FocusPicker } from "@/components/focus-picker";
 import { Scorecard } from "@/components/scorecard";
+import { ShotControls } from "@/components/shot-controls";
 import { ShotOdds } from "@/components/shot-odds";
 import { SkillLevels } from "@/components/skill-levels";
 import { Button } from "@/components/ui/button";
@@ -23,21 +24,26 @@ export async function BowlingGame() {
     <div className="flex flex-col items-center gap-8">
       <Scorecard rolls={player.rolls} />
 
-      {gameOver ? (
-        <form action={newGame} className="w-full">
-          <Button type="submit" size="lg" className="w-full">
-            <ArrowCounterClockwiseIcon data-icon="inline-start" weight="bold" />
-            New game
-          </Button>
-        </form>
-      ) : (
-        <form action={shoot} className="w-full">
-          <Button type="submit" size="lg" className="w-full">
-            <BowlingBallIcon data-icon="inline-start" weight="bold" />
-            Shoot
-          </Button>
-        </form>
-      )}
+      <ShotControls>
+        {gameOver ? (
+          <form action={newGame}>
+            <Button type="submit" size="lg" className="w-full">
+              <ArrowCounterClockwiseIcon
+                data-icon="inline-start"
+                weight="bold"
+              />
+              New game
+            </Button>
+          </form>
+        ) : (
+          <form action={shoot}>
+            <Button type="submit" size="lg" className="w-full">
+              <BowlingBallIcon data-icon="inline-start" weight="bold" />
+              Shoot
+            </Button>
+          </form>
+        )}
+      </ShotControls>
 
       <div className="flex gap-2">
         <FocusPicker focus={player.focus} />

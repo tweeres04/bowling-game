@@ -15,6 +15,9 @@ export const FOCUS_LABELS: Record<Focus, string> = {
 
 export const XP_PER_GAME = 100;
 
+// How often auto mode bowls a shot
+export const AUTO_SHOT_INTERVAL_MS = 4000;
+
 // Share of each game's XP that goes to the area you're focusing on
 export const FOCUS_SHARE = 0.75;
 

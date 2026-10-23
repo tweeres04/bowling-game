@@ -48,6 +48,14 @@ export async function shoot() {
   refresh();
 }
 
+// One tick of auto mode. A finished game stays on the scorecard for a tick
+// before the next one starts.
+export async function autoBowl() {
+  const player = await getOrCreatePlayer();
+  if (isGameOver(player.rolls)) return newGame();
+  return shoot();
+}
+
 export async function newGame() {
   const player = await getOrCreatePlayer();
   await db.update(players).set({ rolls: [] }).where(eq(players.id, player.id));

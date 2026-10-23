@@ -4,6 +4,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme {
+  /* Auto mode's timer bar. Display only; its duration is set from
+     AUTO_SHOT_INTERVAL_MS, which drives the shots. */
+  --animate-fill-bar: fill-bar linear;
+
+  @keyframes fill-bar {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
