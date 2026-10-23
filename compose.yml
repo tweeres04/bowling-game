@@ -1,0 +1,10 @@
+services:
+  bowling-game:
+    build: .
+    container_name: bowling-game
+    restart: unless-stopped
+
+networks:
+  default:
+    external: true
+    name: proxy
