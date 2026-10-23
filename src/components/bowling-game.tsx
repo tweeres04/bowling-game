@@ -1,76 +1,62 @@
-"use client";
-
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ShotOdds } from "@/components/shot-odds";
 import {
-  buildFrames,
-  isGameOver,
-  pinsStandingForNextRoll,
-  rollBall,
-  rollMarks,
-} from "@/lib/bowling";
+  ArrowCounterClockwiseIcon,
+  BowlingBallIcon,
+} from "@phosphor-icons/react/ssr";
+import { newGame, shoot } from "@/app/actions";
+import { FocusPicker } from "@/components/focus-picker";
+import { Scorecard } from "@/components/scorecard";
+import { ShotOdds } from "@/components/shot-odds";
+import { SkillLevels } from "@/components/skill-levels";
+import { Button } from "@/components/ui/button";
+import { isGameOver, pinsStandingForNextRoll } from "@/lib/bowling";
+import { getPlayerForDisplay, xpOf } from "@/lib/player";
+import { skillForShot } from "@/lib/progression";
 
-export function BowlingGame() {
-  const [rolls, setRolls] = useState<number[]>([]);
-  const frames = buildFrames(rolls);
-  const gameOver = isGameOver(rolls);
-
-  function shootNextShot() {
-    setRolls([...rolls, rollBall(pinsStandingForNextRoll(rolls))]);
-  }
+export async function BowlingGame() {
+  const player = await getPlayerForDisplay();
+  const xp = xpOf(player);
+  const gameOver = isGameOver(player.rolls);
+  // After the last frame, the next shot is the new game's first ball
+  const pinsStanding = gameOver ? 10 : pinsStandingForNextRoll(player.rolls);
 
   return (
     <div className="flex flex-col items-center gap-8">
-      <div className="grid grid-cols-[repeat(9,minmax(0,1fr))_minmax(0,1.5fr)] border-l border-t border-foreground">
-        {frames.map((frame, frameIndex) => {
-          const isTenth = frameIndex === 9;
-          const marks = rollMarks(frame.rolls);
-          // A strike sits in the right-hand box, like a real scorecard
-          const boxes = isTenth
-            ? [marks[0], marks[1], marks[2]]
-            : marks[0] === "X"
-              ? [undefined, "X"]
-              : [marks[0], marks[1]];
-
-          return (
-            <div
-              key={frameIndex}
-              className="flex flex-col border-b border-r border-foreground"
-            >
-              <p className="border-b border-foreground text-center text-xs">
-                {frameIndex + 1}
-              </p>
-              <div className="flex justify-end">
-                {boxes.map((mark, boxIndex) => (
-                  <span
-                    key={boxIndex}
-                    className="flex size-7 items-center justify-center border-b border-l border-foreground font-mono text-sm sm:size-9"
-                  >
-                    {mark}
-                  </span>
-                ))}
-              </div>
-              <p className="flex h-10 items-center justify-center font-mono text-lg">
-                {frame.score}
-              </p>
-            </div>
-          );
-        })}
-      </div>
+      <Scorecard rolls={player.rolls} />
 
       {gameOver ? (
-        <Button size="lg" onClick={() => setRolls([])}>
-          New game
-        </Button>
+        <form action={newGame} className="w-full">
+          <Button type="submit" size="lg" className="w-full">
+            <ArrowCounterClockwiseIcon data-icon="inline-start" weight="bold" />
+            New game
+          </Button>
+        </form>
       ) : (
-        <>
-          <Button size="lg" onClick={shootNextShot}>
+        <form action={shoot} className="w-full">
+          <Button type="submit" size="lg" className="w-full">
+            <BowlingBallIcon data-icon="inline-start" weight="bold" />
             Shoot
           </Button>
-          <ShotOdds pinsStanding={pinsStandingForNextRoll(rolls)} />
-        </>
+        </form>
       )}
+
+      <div className="flex gap-2">
+        <FocusPicker focus={player.focus} />
+        <ShotOdds
+          pinsStanding={pinsStanding}
+          skill={skillForShot(xp, player.focus, pinsStanding)}
+        />
+      </div>
+
+      <SkillLevels xp={xp} focus={player.focus} />
+    </div>
+  );
+}
+
+// Shown while the player loads; an empty scorecard holds the layout
+export function BowlingGameSkeleton() {
+  return (
+    <div className="flex flex-col items-center gap-8">
+      <Scorecard rolls={[]} />
     </div>
   );
 }

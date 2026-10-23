@@ -1,10 +1,14 @@
+// Skill blends each table from the beginner version (skill 0) to the pro
+// version (skill 1).
+
 // Weights for how many pins the first ball of a rack knocks down (index = pins).
-// They sum to 100, so each weight reads as a percent. Strike is 3%.
-// Tuned for a first-timer averaging ~70.
-const FIRST_BALL_WEIGHTS = [18, 6, 7, 9, 11, 12, 11, 10, 7, 6, 3];
+// They sum to 100, so each weight reads as a percent. Beginners strike 3% and
+// average ~70; pros strike 60% and average ~225.
+const BEGINNER_FIRST_BALL_WEIGHTS = [18, 6, 7, 9, 11, 12, 11, 10, 7, 6, 3];
+const PRO_FIRST_BALL_WEIGHTS = [0, 0, 0, 0, 1, 1, 2, 4, 10, 22, 60];
 
 // Chance of picking up the spare, keyed by how many pins are left standing.
-const SPARE_CHANCE: Record<number, number> = {
+const BEGINNER_SPARE_CHANCE: Record<number, number> = {
   1: 0.25,
   2: 0.12,
   3: 0.07,
@@ -16,6 +20,22 @@ const SPARE_CHANCE: Record<number, number> = {
   9: 0.02,
   10: 0.02,
 };
+const PRO_SPARE_CHANCE: Record<number, number> = {
+  1: 0.97,
+  2: 0.9,
+  3: 0.8,
+  4: 0.7,
+  5: 0.6,
+  6: 0.5,
+  7: 0.4,
+  8: 0.35,
+  9: 0.3,
+  10: 0.3,
+};
+
+function blend(beginner: number, pro: number, skill: number) {
+  return beginner + (pro - beginner) * skill;
+}
 
 function pickWeighted(weights: number[]) {
   const total = weights.reduce((sum, weight) => sum + weight, 0);
@@ -33,16 +53,26 @@ function toProbabilities(weights: number[]) {
 }
 
 // Probability of knocking down each number of pins (index = pins)
-export function shotOdds(pinsStanding: number) {
-  if (pinsStanding === 10) return toProbabilities(FIRST_BALL_WEIGHTS);
-  const spareChance = SPARE_CHANCE[pinsStanding];
+export function shotOdds(pinsStanding: number, skill: number) {
+  if (pinsStanding === 10) {
+    return toProbabilities(
+      BEGINNER_FIRST_BALL_WEIGHTS.map((weight, pins) =>
+        blend(weight, PRO_FIRST_BALL_WEIGHTS[pins], skill),
+      ),
+    );
+  }
+  const spareChance = blend(
+    BEGINNER_SPARE_CHANCE[pinsStanding],
+    PRO_SPARE_CHANCE[pinsStanding],
+    skill,
+  );
   // Missed the spare: every short count, gutter included, is equally likely
   const missOdds = Array<number>(pinsStanding).fill((1 - spareChance) / pinsStanding);
   return [...missOdds, spareChance];
 }
 
-export function rollBall(pinsStanding: number) {
-  return pickWeighted(shotOdds(pinsStanding));
+export function rollBall(pinsStanding: number, skill: number) {
+  return pickWeighted(shotOdds(pinsStanding, skill));
 }
 
 export type Frame = {

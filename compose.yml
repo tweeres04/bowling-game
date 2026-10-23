@@ -3,6 +3,10 @@ services:
     build: .
     container_name: bowling-game
     restart: unless-stopped
+    volumes:
+      - ./database:/app/database
+    environment:
+      DATABASE_URL: file:./database/bowling-game.db
 
 networks:
   default:

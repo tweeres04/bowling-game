@@ -1,0 +1,50 @@
+import { Progress } from "@/components/ui/progress";
+import {
+  FOCUS_BOOST_LEVELS,
+  FOCUS_LABELS,
+  levelFromXp,
+  xpForLevel,
+  type Focus,
+  type SkillArea,
+  type Xp,
+} from "@/lib/progression";
+
+const SKILL_AREAS: SkillArea[] = ["firstBall", "spares"];
+
+function formatXp(xp: number) {
+  return xp.toLocaleString("en-US");
+}
+
+export function SkillLevels({ xp, focus }: { xp: Xp; focus: Focus }) {
+  return (
+    <div className="w-full max-w-sm">
+      <h2 className="mb-3 text-sm font-semibold">Your skill</h2>
+      <ul className="space-y-4 text-sm">
+        {SKILL_AREAS.map((area) => {
+          const level = levelFromXp(xp[area]);
+          const levelStartXp = xpForLevel(level);
+          const xpIntoLevel = xp[area] - levelStartXp;
+          const levelCostXp = xpForLevel(level + 1) - levelStartXp;
+
+          return (
+            <li key={area}>
+              <div className="mb-1.5 flex justify-between gap-3">
+                <span>
+                  {FOCUS_LABELS[area]} · Level {level}
+                  {area === focus && ` (+${FOCUS_BOOST_LEVELS} from focus)`}
+                </span>
+                <span className="font-mono tabular-nums">
+                  {formatXp(xpIntoLevel)} / {formatXp(levelCostXp)} XP
+                </span>
+              </div>
+              <Progress
+                value={(xpIntoLevel / levelCostXp) * 100}
+                aria-label={`${FOCUS_LABELS[area]} progress to level ${level + 1}`}
+              />
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
