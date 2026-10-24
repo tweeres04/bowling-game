@@ -3,12 +3,30 @@
 import { Progress as ProgressPrimitive } from '@base-ui/react/progress'
 import { cn } from 'cn'
 
+// Muted is for a bar that sits under a main one and shouldn't compete with it
+const INDICATOR_TONES = {
+	primary: 'bg-primary',
+	muted: 'bg-muted-foreground',
+}
+
+// Set on the track, not the root, so a label passed as children keeps its
+// own height
+const TRACK_SIZES = {
+	default: 'h-1',
+	sm: 'h-0.5',
+}
+
 function Progress({
 	className,
 	children,
 	value,
+	tone = 'primary',
+	size = 'default',
 	...props
-}: ProgressPrimitive.Root.Props) {
+}: ProgressPrimitive.Root.Props & {
+	tone?: keyof typeof INDICATOR_TONES
+	size?: keyof typeof TRACK_SIZES
+}) {
 	return (
 		<ProgressPrimitive.Root
 			value={value}
@@ -17,8 +35,8 @@ function Progress({
 			{...props}
 		>
 			{children}
-			<ProgressTrack>
-				<ProgressIndicator />
+			<ProgressTrack className={TRACK_SIZES[size]}>
+				<ProgressIndicator className={INDICATOR_TONES[tone]} />
 			</ProgressTrack>
 		</ProgressPrimitive.Root>
 	)
