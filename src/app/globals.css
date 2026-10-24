@@ -99,24 +99,24 @@
 }
 
 .dark {
-  --background: oklch(0.204 0.056 266.3); /* the app icon's navy */
+  --background: oklch(0.17 0.025 266.3); /* blue-black, a hint of the app icon's navy */
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.26 0.055 266.3);
+  --card: oklch(0.23 0.028 266.3);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.26 0.055 266.3);
+  --popover: oklch(0.23 0.028 266.3);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.204 0.056 266.3);
-  --secondary: oklch(0.31 0.05 266.3);
+  --primary-foreground: oklch(0.17 0.025 266.3);
+  --secondary: oklch(0.29 0.03 266.3);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.31 0.05 266.3);
-  --muted-foreground: oklch(0.74 0.03 266.3);
-  --accent: oklch(0.31 0.05 266.3);
+  --muted: oklch(0.29 0.03 266.3);
+  --muted-foreground: oklch(0.72 0.015 266.3);
+  --accent: oklch(0.29 0.03 266.3);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.56 0.04 266.3);
+  --ring: oklch(0.556 0.02 266.3);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);

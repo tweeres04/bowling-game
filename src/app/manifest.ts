@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
 
-// The app icon's navy, which is also the dark theme's --background, so the
-// splash screen and status bar blend into the app
-export const APP_BACKGROUND = "#0b1530";
+// The dark theme's --background, so the splash screen and status bar blend
+// into the app
+export const APP_BACKGROUND = "#0a0f1a";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
