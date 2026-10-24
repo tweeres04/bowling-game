@@ -61,15 +61,19 @@ export function ShotControls({ children }: { children: React.ReactNode }) {
           {autoOn ? <PauseIcon weight="bold" /> : <PlayIcon weight="bold" />}
         </Button>
       </div>
-      {running && (
-        <div className="h-1 overflow-hidden rounded-full bg-muted">
-          <div
-            key={tick}
-            className="h-full origin-left animate-fill-bar bg-primary"
-            style={{ animationDuration: `${AUTO_SHOT_INTERVAL_MS}ms` }}
-          />
-        </div>
-      )}
+      {/* Always takes up its height, so turning auto mode on doesn't shift
+          the page; the track and bar only show while it's running */}
+      <div className="h-1 overflow-hidden rounded-full">
+        {running && (
+          <div className="h-full bg-muted">
+            <div
+              key={tick}
+              className="h-full origin-left animate-fill-bar bg-primary"
+              style={{ animationDuration: `${AUTO_SHOT_INTERVAL_MS}ms` }}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
