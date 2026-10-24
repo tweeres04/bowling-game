@@ -14,15 +14,16 @@ import { Button } from '@/components/ui/button'
 import { isGameOver, pinsStandingForNextRoll } from '@/lib/bowling'
 import { getRecentGames } from '@/lib/game-history'
 import { getPlayerForDisplay, xpOf } from '@/lib/player'
-import { getSceneView, getShowScene } from '@/lib/settings'
+import { getAutoMode, getSceneView, getShowScene } from '@/lib/settings'
 import { skillForShot } from '@/lib/progression'
 import { STATS_GAMES } from '@/lib/stats'
 
 export async function BowlingGame() {
-	const [player, showScene, sceneView] = await Promise.all([
+	const [player, showScene, sceneView, autoMode] = await Promise.all([
 		getPlayerForDisplay(),
 		getShowScene(),
 		getSceneView(),
+		getAutoMode(),
 	])
 	// A visitor who hasn't bowled yet has no player row, so no games
 	const recentGames =
@@ -45,7 +46,7 @@ export async function BowlingGame() {
 			)}
 			<Scorecard rolls={player.rolls} />
 
-			<ShotControls>
+			<ShotControls savedAutoOn={autoMode}>
 				{gameOver ? (
 					<form action={newGame}>
 						<Button type="submit" size="lg" className="w-full">

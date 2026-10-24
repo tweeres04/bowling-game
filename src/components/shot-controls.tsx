@@ -8,7 +8,7 @@ import {
 	useTransition,
 } from 'react'
 import { PauseIcon, PlayIcon } from '@phosphor-icons/react'
-import { autoBowl } from '@/app/actions'
+import { autoBowl, setAutoMode } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { AUTO_SHOT_INTERVAL_MS } from '@/lib/progression'
 
@@ -19,8 +19,14 @@ function subscribeToVisibility(onChange: () => void) {
 
 // The Shoot or New game form comes in as children, with the auto mode
 // toggle beside it and its timer bar underneath
-export function ShotControls({ children }: { children: React.ReactNode }) {
-	const [autoOn, setAutoOn] = useState(false)
+export function ShotControls({
+	savedAutoOn,
+	children,
+}: {
+	savedAutoOn: boolean
+	children: React.ReactNode
+}) {
+	const [autoOn, setAutoOn] = useState(savedAutoOn)
 	// Auto mode pauses in a hidden tab, where away bowling takes over, and
 	// picks back up when you return
 	const visible = useSyncExternalStore(
@@ -47,6 +53,11 @@ export function ShotControls({ children }: { children: React.ReactNode }) {
 		return () => clearInterval(timer)
 	}, [running])
 
+	function toggleAuto(on: boolean) {
+		setAutoOn(on)
+		setAutoMode(on)
+	}
+
 	return (
 		<div className="w-full space-y-3">
 			<div className="flex gap-2">
@@ -56,7 +67,7 @@ export function ShotControls({ children }: { children: React.ReactNode }) {
 					variant={autoOn ? 'default' : 'secondary'}
 					aria-pressed={autoOn}
 					aria-label={autoOn ? 'Stop auto bowling' : 'Start auto bowling'}
-					onClick={() => setAutoOn(!autoOn)}
+					onClick={() => toggleAuto(!autoOn)}
 				>
 					{autoOn ? <PauseIcon weight="bold" /> : <PlayIcon weight="bold" />}
 				</Button>

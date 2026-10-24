@@ -20,7 +20,11 @@ import {
 	xpOf,
 	type Player,
 } from '@/lib/player'
-import { SCENE_VIEW_COOKIE, SHOW_SCENE_COOKIE } from '@/lib/settings'
+import {
+	AUTO_MODE_COOKIE,
+	SCENE_VIEW_COOKIE,
+	SHOW_SCENE_COOKIE,
+} from '@/lib/settings'
 import { SCENE_VIEWS, type SceneView } from '@/lib/scene-view'
 import { AWAY_SHOT_INTERVAL_MS } from '@/lib/progression'
 
@@ -120,6 +124,17 @@ export async function setFocus(formData: FormData) {
 	const player = await getOrCreatePlayer()
 	await db.update(players).set({ focus }).where(eq(players.id, player.id))
 	refresh()
+}
+
+// No refresh: the play button already shows the change, and the cookie only
+// matters on the next visit
+export async function setAutoMode(on: boolean) {
+	if (typeof on !== 'boolean') throw new Error(`Unknown setting: ${on}`)
+	const cookieStore = await cookies()
+	cookieStore.set(AUTO_MODE_COOKIE, String(on), {
+		maxAge: COOKIE_MAX_AGE,
+		sameSite: 'lax',
+	})
 }
 
 export async function setShowScene(show: boolean) {
