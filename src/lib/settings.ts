@@ -13,5 +13,5 @@ export async function getShowScene() {
 
 export async function getSceneView(): Promise<SceneView> {
   const saved = (await cookies()).get(SCENE_VIEW_COOKIE)?.value;
-  return SCENE_VIEWS.find((view) => view === saved) ?? "side";
+  return SCENE_VIEWS.find((view) => view === saved) ?? "angled";
 }

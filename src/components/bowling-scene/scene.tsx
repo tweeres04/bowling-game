@@ -142,24 +142,51 @@ function ShapeGeometry({ shape, grow = 0 }: { shape: Shape; grow?: number }) {
 
 // The "inverted hull" trick: a slightly bigger black copy that only draws its
 // inside faces, so it peeks out around the edges as an outline
+// Stencil value the head writes, so the hair's outline can skip his face
+const FACE_MASK = 1;
+
 function OutlinedPart({
   shape,
   color,
   position,
   ref,
+  masksFace = false,
+  outlineSkipsFace = false,
 }: {
   shape: Shape;
   color: string;
   position?: [number, number, number];
   ref?: React.Ref<THREE.Mesh>;
+  // Marks this part's pixels as face, for outlineSkipsFace
+  masksFace?: boolean;
+  // Keeps this part's outline from drawing over the face, where an
+  // overlapping shell would otherwise show as a line across it
+  outlineSkipsFace?: boolean;
 }) {
   return (
     <mesh ref={ref} position={position}>
       <ShapeGeometry shape={shape} />
-      <Material color={color} />
-      <mesh>
+      {masksFace ? (
+        <meshToonMaterial
+          color={color}
+          gradientMap={TOON_BANDS}
+          stencilWrite
+          stencilRef={FACE_MASK}
+          stencilZPass={THREE.ReplaceStencilOp}
+        />
+      ) : (
+        <Material color={color} />
+      )}
+      {/* Drawn after everything else when it has to check the face mask */}
+      <mesh renderOrder={outlineSkipsFace ? 1 : 0}>
         <ShapeGeometry shape={shape} grow={OUTLINE} />
-        <meshBasicMaterial color="black" side={THREE.BackSide} />
+        <meshBasicMaterial
+          color="black"
+          side={THREE.BackSide}
+          stencilWrite={outlineSkipsFace}
+          stencilRef={FACE_MASK}
+          stencilFunc={THREE.NotEqualStencilFunc}
+        />
       </mesh>
     </mesh>
   );
@@ -442,11 +469,13 @@ function Bowler({ throwStart }: { throwStart: React.RefObject<number> }) {
             shape={{ gem: 0.13, detail: 0 }}
             color={COLORS.skin}
             position={[0, 0.78, 0]}
+            masksFace
           />
           <OutlinedPart
             shape={{ box: [0.22, 0.08, 0.22] }}
             color={COLORS.hair}
             position={[0, 0.88, 0.02]}
+            outlineSkipsFace
           />
           <group ref={leftArm} position={[-0.27, 0.56, 0]}>
             <Limb size={[0.1, 0.62, 0.1]} color={COLORS.shirt} />
@@ -466,7 +495,19 @@ function Bowler({ throwStart }: { throwStart: React.RefObject<number> }) {
   );
 }
 
-const CAMERA_FOV: Record<SceneView, number> = { side: 40, behind: 55 };
+const CAMERA_FOV: Record<SceneView, number> = {
+  side: 40,
+  angled: 40,
+  behind: 55,
+};
+
+// The side on views: how far the camera swings around toward the bowler's
+// end (so he's a little closer and the pins recede), and how high it sits
+// for each unit it backs away
+const SIDE_ON_CAMERAS = {
+  side: { swing: 0, rise: 0.12 },
+  angled: { swing: THREE.MathUtils.degToRad(20), rise: 0.25 },
+};
 
 function SceneCamera({ view }: { view: SceneView }) {
   // Prop changes don't draw a frame on their own in demand mode
@@ -500,7 +541,12 @@ function SceneCamera({ view }: { view: SceneView }) {
     const farEnd = -LANE_LENGTH - 1.4;
     const centerZ = (nearEnd + farEnd) / 2;
     const distance = (nearEnd - farEnd) / 2 / Math.tan(halfHorizontal);
-    camera.position.set(distance, 1.5 + distance * 0.12, centerZ);
+    const { swing, rise } = SIDE_ON_CAMERAS[view];
+    camera.position.set(
+      Math.cos(swing) * distance,
+      1.5 + distance * rise,
+      centerZ + Math.sin(swing) * distance,
+    );
     camera.lookAt(0, 0.8, centerZ);
   });
   return null;
@@ -520,7 +566,8 @@ export default function BowlingScene({
       frameloop="demand"
       // Capped at 2x so high density phones don't render more than they need
       dpr={PIXEL_ART ? PIXEL_SCALE : [1, 2]}
-      gl={{ antialias: !PIXEL_ART }}
+      // Stencil for the face mask (three leaves it off by default)
+      gl={{ antialias: !PIXEL_ART, stencil: true }}
       className={
         PIXEL_ART ? "[&_canvas]:[image-rendering:pixelated]" : undefined
       }
@@ -531,7 +578,7 @@ export default function BowlingScene({
           side. */}
       <hemisphereLight args={["#ffffff", "#445066", 0.5]} />
       <directionalLight
-        position={view === "side" ? [5, 6, 3] : [-3, 5, 3]}
+        position={view === "behind" ? [-3, 5, 3] : [5, 6, 3]}
         intensity={2.6}
       />
       <SceneCamera view={view} />
