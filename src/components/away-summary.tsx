@@ -15,10 +15,15 @@ import { RewardList, RewardRow } from "@/components/reward-list";
 import { StatGrid, StatTile } from "@/components/stat-grid";
 import { formatDuration, formatNumber } from "@/lib/format";
 import type { AwaySummary as Summary } from "@/lib/play";
-import { FOCUS_LABELS, SKILL_AREAS } from "@/lib/progression";
+import {
+  AWAY_SHOT_INTERVAL_MS,
+  FOCUS_LABELS,
+  SKILL_AREAS,
+} from "@/lib/progression";
 
-// Collects away progress when the page opens or the tab comes back into
-// view, and shows what you bowled if a game finished
+// Collects away progress when the page opens, when you come back to it, and
+// every away interval while you're on it with auto mode off. Shows what you
+// bowled if a game finished.
 export function AwaySummary() {
   const [summary, setSummary] = useState<Summary | null>(null);
 
@@ -34,9 +39,16 @@ export function AwaySummary() {
     function collectWhenVisible() {
       if (document.visibilityState === "visible") collect();
     }
+    // Switching apps or windows can leave the tab "visible" the whole time,
+    // so focus coming back counts as returning too
     document.addEventListener("visibilitychange", collectWhenVisible);
-    return () =>
+    window.addEventListener("focus", collectWhenVisible);
+    const timer = setInterval(collectWhenVisible, AWAY_SHOT_INTERVAL_MS);
+    return () => {
       document.removeEventListener("visibilitychange", collectWhenVisible);
+      window.removeEventListener("focus", collectWhenVisible);
+      clearInterval(timer);
+    };
   }, []);
 
   return (

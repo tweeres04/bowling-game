@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Poppins } from "next/font/google";
+import { APP_BACKGROUND } from "./manifest";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -14,8 +15,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bowling",
+  title: "Auto bowling",
   description: "An idle bowling game",
+  // iOS ignores most of the manifest; this makes the home screen version
+  // open full screen with its own name
+  appleWebApp: {
+    capable: true,
+    title: "Auto bowling",
+    statusBarStyle: "black",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: APP_BACKGROUND,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
