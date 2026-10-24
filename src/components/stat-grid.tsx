@@ -19,8 +19,9 @@ export function StatTile({
   value: React.ReactNode;
 }) {
   return (
-    // Outlined, not filled, so it doesn't read as a secondary button
-    <div className="rounded-lg border p-3 text-center">
+    // Page colored and outlined, so it doesn't read as a secondary button.
+    // Opaque so the 3D scene behind doesn't show through.
+    <div className="rounded-lg border bg-background p-3 text-center">
       <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="text-xl font-semibold tabular-nums">{value}</dd>
     </div>

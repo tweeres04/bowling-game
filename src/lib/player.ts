@@ -18,6 +18,7 @@ const NEW_PLAYER = {
   firstBallXp: 0,
   sparesXp: 0,
   focus: "balanced",
+  lastShotAt: null,
 } satisfies Partial<Player>;
 
 export async function getPlayerForDisplay() {

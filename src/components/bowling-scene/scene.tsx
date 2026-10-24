@@ -1,0 +1,384 @@
+"use client";
+
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
+import * as THREE from "three";
+
+// On: rendered at a fraction of screen resolution and scaled up with crisp
+// pixels, to match the pixel art icon. Off: sharp and antialiased.
+const PIXEL_ART = true;
+const PIXEL_SCALE = 0.25;
+
+const LANE_LENGTH = 12;
+const LANE_WIDTH = 1.05;
+const BALL_RADIUS = 0.11;
+
+// One throw, in seconds: approach, swing, release, and roll to the pins,
+// then the bowler snaps back to the start. Fits inside auto mode's 4 second
+// interval.
+const RELEASE_AT = 1.15;
+const ROLL_TIME = 1.8;
+const THROW_LENGTH = RELEASE_AT + ROLL_TIME;
+
+const COLORS = {
+  lane: "#c98f56",
+  approach: "#a8743f",
+  gutter: "#3a3f55",
+  pinDeck: "#1b2236",
+  pin: "#f4f1ea",
+  pinStripe: "#d83a3a",
+  shirt: "#e0552b",
+  pants: "#2b3148",
+  skin: "#e9b48c",
+  hair: "#3a2a20",
+  shoes: "#f2f2f2",
+  ball: "#2f5fd8",
+};
+
+type Keyframes = [time: number, value: number][];
+
+// Eased value between the keyframes around t; holds the ends past either side
+function sample(frames: Keyframes, t: number) {
+  if (t <= frames[0][0]) return frames[0][1];
+  for (let i = 1; i < frames.length; i++) {
+    const [endTime, endValue] = frames[i];
+    if (t <= endTime) {
+      const [startTime, startValue] = frames[i - 1];
+      const progress = (t - startTime) / (endTime - startTime);
+      const eased = progress * progress * (3 - 2 * progress);
+      return startValue + (endValue - startValue) * eased;
+    }
+  }
+  return frames[frames.length - 1][1];
+}
+
+// Rotations are radians. Positive arm and leg angles swing toward the pins;
+// negative lean tips the upper body forward.
+const POSES = {
+  z: [
+    [0, 2.4],
+    [1.0, 1.0],
+    [1.3, 0.7],
+  ],
+  rightArm: [
+    [0, 0.3],
+    [0.25, 0.7],
+    [0.8, -1.5],
+    [1.2, 0.4],
+    [1.4, 1.6],
+  ],
+  leftArm: [
+    [0, 0],
+    [1.0, -0.3],
+    [1.25, -1.1],
+  ],
+  lean: [
+    [0, 0],
+    [0.9, -0.15],
+    [1.25, -0.5],
+  ],
+  leftLeg: [
+    [0, 0],
+    [0.25, 0.45],
+    [0.5, -0.45],
+    [0.75, 0.45],
+    [1.05, 0.5],
+  ],
+  rightLeg: [
+    [0, 0],
+    [0.25, -0.45],
+    [0.5, 0.45],
+    [0.75, -0.45],
+    [1.05, -0.8],
+  ],
+} satisfies Record<string, Keyframes>;
+
+// Cel shading: light snaps to these three brightness bands (shadow, mid,
+// lit) instead of blending smoothly. Nearest filtering keeps the steps hard.
+const TOON_BANDS = (() => {
+  const texture = new THREE.DataTexture(
+    new Uint8Array([90, 170, 255]),
+    3,
+    1,
+    THREE.RedFormat,
+  );
+  texture.minFilter = THREE.NearestFilter;
+  texture.magFilter = THREE.NearestFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+  return texture;
+})();
+
+// Toon everywhere: no smooth shading or shiny highlights anywhere in the scene
+function Material({ color }: { color: string }) {
+  return <meshToonMaterial color={color} gradientMap={TOON_BANDS} />;
+}
+
+// Comic book outline thickness, in scene units. A fixed thickness (rather
+// than scaling each part) keeps thin arms from getting hairline outlines.
+const OUTLINE = 0.05;
+
+type Shape =
+  | { box: [width: number, height: number, depth: number] }
+  | { gem: number; detail: number };
+
+function ShapeGeometry({ shape, grow = 0 }: { shape: Shape; grow?: number }) {
+  if ("box" in shape) {
+    const [width, height, depth] = shape.box;
+    return (
+      <boxGeometry
+        args={[width + grow * 2, height + grow * 2, depth + grow * 2]}
+      />
+    );
+  }
+  return <icosahedronGeometry args={[shape.gem + grow, shape.detail]} />;
+}
+
+// The "inverted hull" trick: a slightly bigger black copy that only draws its
+// inside faces, so it peeks out around the edges as an outline
+function OutlinedPart({
+  shape,
+  color,
+  position,
+  ref,
+}: {
+  shape: Shape;
+  color: string;
+  position?: [number, number, number];
+  ref?: React.Ref<THREE.Mesh>;
+}) {
+  return (
+    <mesh ref={ref} position={position}>
+      <ShapeGeometry shape={shape} />
+      <Material color={color} />
+      <mesh>
+        <ShapeGeometry shape={shape} grow={OUTLINE} />
+        <meshBasicMaterial color="black" side={THREE.BackSide} />
+      </mesh>
+    </mesh>
+  );
+}
+
+function Lane() {
+  return (
+    <group>
+      <mesh position={[0, -0.05, -LANE_LENGTH / 2]}>
+        <boxGeometry args={[LANE_WIDTH, 0.1, LANE_LENGTH]} />
+        <Material color={COLORS.lane} />
+      </mesh>
+      <mesh position={[0, -0.05, 1.6]}>
+        <boxGeometry args={[LANE_WIDTH + 0.6, 0.1, 3.2]} />
+        <Material color={COLORS.approach} />
+      </mesh>
+      {[-1, 1].map((side) => (
+        <mesh
+          key={side}
+          position={[side * (LANE_WIDTH / 2 + 0.13), -0.08, -LANE_LENGTH / 2]}
+        >
+          <boxGeometry args={[0.26, 0.1, LANE_LENGTH]} />
+          <Material color={COLORS.gutter} />
+        </mesh>
+      ))}
+      <mesh position={[0, 0.6, -LANE_LENGTH - 1.2]}>
+        <boxGeometry args={[LANE_WIDTH + 1, 1.4, 0.2]} />
+        <Material color={COLORS.pinDeck} />
+      </mesh>
+    </group>
+  );
+}
+
+function Pins() {
+  // Low segment count keeps the faceted look
+  const pinGeometry = useMemo(() => {
+    const profile = [
+      [0, 0],
+      [0.05, 0],
+      [0.06, 0.08],
+      [0.06, 0.14],
+      [0.035, 0.24],
+      [0.03, 0.28],
+      [0.045, 0.33],
+      [0.03, 0.38],
+      [0, 0.38],
+    ].map(([radius, height]) => new THREE.Vector2(radius, height));
+    return new THREE.LatheGeometry(profile, 8);
+  }, []);
+
+  // Head pin first, then rows of 2, 3 and 4 behind it
+  const positions = [0, 1, 2, 3].flatMap((row) =>
+    Array.from(
+      { length: row + 1 },
+      (_, index) =>
+        [(index - row / 2) * 0.3, 0, -LANE_LENGTH + 0.6 - row * 0.26] as const,
+    ),
+  );
+
+  return positions.map((position) => (
+    <group key={position.join()} position={position}>
+      <mesh geometry={pinGeometry}>
+        <Material color={COLORS.pin} />
+      </mesh>
+      <mesh position={[0, 0.27, 0]}>
+        <cylinderGeometry args={[0.032, 0.032, 0.02, 8]} />
+        <Material color={COLORS.pinStripe} />
+      </mesh>
+    </group>
+  ));
+}
+
+function Limb({
+  size,
+  color,
+}: {
+  size: [number, number, number];
+  color: string;
+}) {
+  // Hangs down from its pivot, so rotating the parent group swings it
+  return (
+    <OutlinedPart
+      shape={{ box: size }}
+      color={color}
+      position={[0, -size[1] / 2, 0]}
+    />
+  );
+}
+
+// Plays one throw each time shotKey changes, skipping the first render
+function Bowler({ shotKey }: { shotKey: number | null }) {
+  // Seconds from the browser's clock, not three's: three's clock only
+  // advances when a frame draws, and frames stop between throws. Starts far
+  // in the past, so the bowler waits in the finished pose.
+  const throwStart = useRef(-Infinity);
+  const previousKey = useRef(shotKey);
+  const invalidate = useThree((state) => state.invalidate);
+
+  useEffect(() => {
+    if (shotKey === previousKey.current) return;
+    previousKey.current = shotKey;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    throwStart.current = performance.now() / 1000;
+    invalidate();
+  }, [shotKey, invalidate]);
+
+  const bowler = useRef<THREE.Group>(null);
+  const upperBody = useRef<THREE.Group>(null);
+  const rightArm = useRef<THREE.Group>(null);
+  const leftArm = useRef<THREE.Group>(null);
+  const rightLeg = useRef<THREE.Group>(null);
+  const leftLeg = useRef<THREE.Group>(null);
+  const hand = useRef<THREE.Object3D>(null);
+  const ball = useRef<THREE.Mesh>(null);
+  const releasePoint = useMemo(() => new THREE.Vector3(), []);
+
+  useFrame((state) => {
+    const t = performance.now() / 1000 - throwStart.current;
+    // Once the ball reaches the pins, snap back to the starting pose
+    const poseTime = t < THROW_LENGTH ? t : 0;
+
+    bowler.current!.position.z = sample(POSES.z, poseTime);
+    upperBody.current!.rotation.x = sample(POSES.lean, poseTime);
+    rightArm.current!.rotation.x = sample(POSES.rightArm, poseTime);
+    leftArm.current!.rotation.z = sample(POSES.leftArm, poseTime);
+    leftLeg.current!.rotation.x = sample(POSES.leftLeg, poseTime);
+    rightLeg.current!.rotation.x = sample(POSES.rightLeg, poseTime);
+
+    const ballMesh = ball.current!;
+    const rollProgress = (t - RELEASE_AT) / ROLL_TIME;
+    if (t < RELEASE_AT || t >= THROW_LENGTH) {
+      // In hand: before the release, and back at the start after the roll
+      bowler.current!.updateMatrixWorld();
+      hand.current!.getWorldPosition(ballMesh.position);
+      releasePoint.copy(ballMesh.position);
+    } else {
+      // Drops to the lane, then rolls to the pins with a little hook
+      ballMesh.position.set(
+        releasePoint.x * (1 - rollProgress) +
+          Math.sin(rollProgress * Math.PI) * 0.12,
+        BALL_RADIUS +
+          Math.max(0, releasePoint.y - BALL_RADIUS) *
+            Math.max(0, 1 - rollProgress * 8),
+        releasePoint.z + (-LANE_LENGTH + 0.6 - releasePoint.z) * rollProgress,
+      );
+      ballMesh.rotation.x -= 0.4;
+    }
+
+    // Only keep drawing frames while the throw is playing
+    if (t < THROW_LENGTH) state.invalidate();
+  });
+
+  return (
+    <>
+      <group ref={bowler} position={[-0.2, 0, POSES.z[0][1]]}>
+        {[
+          { ref: leftLeg, x: -0.1 },
+          { ref: rightLeg, x: 0.1 },
+        ].map(({ ref, x }) => (
+          <group key={x} ref={ref} position={[x, 0.9, 0]}>
+            <Limb size={[0.15, 0.82, 0.17]} color={COLORS.pants} />
+            <OutlinedPart
+              shape={{ box: [0.15, 0.08, 0.28] }}
+              color={COLORS.shoes}
+              position={[0, -0.86, -0.05]}
+            />
+          </group>
+        ))}
+        <group ref={upperBody} position={[0, 0.9, 0]}>
+          <OutlinedPart
+            shape={{ box: [0.42, 0.62, 0.24] }}
+            color={COLORS.shirt}
+            position={[0, 0.3, 0]}
+          />
+          <OutlinedPart
+            shape={{ gem: 0.13, detail: 0 }}
+            color={COLORS.skin}
+            position={[0, 0.78, 0]}
+          />
+          <OutlinedPart
+            shape={{ box: [0.22, 0.08, 0.22] }}
+            color={COLORS.hair}
+            position={[0, 0.88, 0.02]}
+          />
+          <group ref={leftArm} position={[-0.27, 0.56, 0]}>
+            <Limb size={[0.1, 0.62, 0.1]} color={COLORS.shirt} />
+          </group>
+          <group ref={rightArm} position={[0.27, 0.56, 0]}>
+            <Limb size={[0.1, 0.62, 0.1]} color={COLORS.shirt} />
+            <object3D ref={hand} position={[0, -0.7, -0.04]} />
+          </group>
+        </group>
+      </group>
+      <OutlinedPart
+        ref={ball}
+        shape={{ gem: BALL_RADIUS, detail: 1 }}
+        color={COLORS.ball}
+      />
+    </>
+  );
+}
+
+export default function BowlingScene({ shotKey }: { shotKey: number | null }) {
+  return (
+    <Canvas
+      frameloop="demand"
+      // Capped at 2x so high density phones don't render more than they need
+      dpr={PIXEL_ART ? PIXEL_SCALE : [1, 2]}
+      gl={{ antialias: !PIXEL_ART }}
+      // Behind the bowler and wide, since the page is usually a tall phone
+      // screen where a side-on view would crop the lane
+      camera={{ position: [0.5, 2.3, 5.8], fov: 55 }}
+      onCreated={({ camera }) => camera.lookAt(0, 0.4, -LANE_LENGTH / 2)}
+      className={
+        PIXEL_ART ? "[&_canvas]:[image-rendering:pixelated]" : undefined
+      }
+    >
+      {/* Fill light is added evenly on top of the toon bands, so it stays low
+          to keep the shadow band clearly darker. The key light comes from
+          the upper left so the camera sees a lit side and a shadow side. */}
+      <hemisphereLight args={["#ffffff", "#445066", 0.5]} />
+      <directionalLight position={[-3, 5, 3]} intensity={2.6} />
+      <Lane />
+      <Pins />
+      <Bowler shotKey={shotKey} />
+    </Canvas>
+  );
+}

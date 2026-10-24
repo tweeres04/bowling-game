@@ -21,6 +21,7 @@ import {
   xpOf,
   type Player,
 } from "@/lib/player";
+import { SHOW_SCENE_COOKIE } from "@/lib/settings";
 import { STATS_WINDOWS } from "@/lib/stats";
 import { AWAY_SHOT_INTERVAL_MS } from "@/lib/progression";
 
@@ -129,6 +130,16 @@ export async function setStatsWindow(formData: FormData) {
   }
   const cookieStore = await cookies();
   cookieStore.set(STATS_WINDOW_COOKIE, String(statsWindow), {
+    maxAge: COOKIE_MAX_AGE,
+    sameSite: "lax",
+  });
+  refresh();
+}
+
+export async function setShowScene(show: boolean) {
+  if (typeof show !== "boolean") throw new Error(`Unknown setting: ${show}`);
+  const cookieStore = await cookies();
+  cookieStore.set(SHOW_SCENE_COOKIE, String(show), {
     maxAge: COOKIE_MAX_AGE,
     sameSite: "lax",
   });
