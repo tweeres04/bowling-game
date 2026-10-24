@@ -12,21 +12,21 @@ import { ShotOdds } from "@/components/shot-odds";
 import { SkillLevels } from "@/components/skill-levels";
 import { Button } from "@/components/ui/button";
 import { isGameOver, pinsStandingForNextRoll } from "@/lib/bowling";
-import { getRecentGames, getStatsWindow } from "@/lib/game-history";
+import { getRecentGames } from "@/lib/game-history";
 import { getPlayerForDisplay, xpOf } from "@/lib/player";
 import { getSceneView, getShowScene } from "@/lib/settings";
 import { skillForShot } from "@/lib/progression";
+import { STATS_GAMES } from "@/lib/stats";
 
 export async function BowlingGame() {
-  const [player, statsWindow, showScene, sceneView] = await Promise.all([
+  const [player, showScene, sceneView] = await Promise.all([
     getPlayerForDisplay(),
-    getStatsWindow(),
     getShowScene(),
     getSceneView(),
   ]);
   // A visitor who hasn't bowled yet has no player row, so no games
   const recentGames =
-    "id" in player ? await getRecentGames(player.id, statsWindow) : [];
+    "id" in player ? await getRecentGames(player.id, STATS_GAMES) : [];
   const xp = xpOf(player);
   const gameOver = isGameOver(player.rolls);
   // After the last frame, the next shot is the new game's first ball
@@ -71,7 +71,7 @@ export async function BowlingGame() {
       </div>
 
       <SkillLevels xp={xp} focus={player.focus} />
-      <GameStats games={recentGames} statsWindow={statsWindow} />
+      <GameStats games={recentGames} />
       <AwaySummary />
     </div>
   );

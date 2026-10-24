@@ -1,16 +1,7 @@
 import "server-only";
-import { cookies } from "next/headers";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { games } from "@/db/schema";
-import { STATS_WINDOWS, type StatsWindow } from "@/lib/stats";
-
-export const STATS_WINDOW_COOKIE = "statsWindow";
-
-export async function getStatsWindow(): Promise<StatsWindow> {
-  const saved = Number((await cookies()).get(STATS_WINDOW_COOKIE)?.value);
-  return STATS_WINDOWS.find((option) => option === saved) ?? 10;
-}
 
 export type RecentGame = Awaited<ReturnType<typeof getRecentGames>>[number];
 

@@ -14,7 +14,6 @@ import {
   type FinishedGame,
   type PlayState,
 } from "@/lib/play";
-import { STATS_WINDOW_COOKIE } from "@/lib/game-history";
 import {
   COOKIE_MAX_AGE,
   getOrCreatePlayer,
@@ -23,7 +22,6 @@ import {
 } from "@/lib/player";
 import { SCENE_VIEW_COOKIE, SHOW_SCENE_COOKIE } from "@/lib/settings";
 import { SCENE_VIEWS, type SceneView } from "@/lib/scene-view";
-import { STATS_WINDOWS } from "@/lib/stats";
 import { AWAY_SHOT_INTERVAL_MS } from "@/lib/progression";
 
 function playStateOf(player: Player): PlayState {
@@ -121,19 +119,6 @@ export async function setFocus(formData: FormData) {
   }
   const player = await getOrCreatePlayer();
   await db.update(players).set({ focus }).where(eq(players.id, player.id));
-  refresh();
-}
-
-export async function setStatsWindow(formData: FormData) {
-  const statsWindow = Number(formData.get("statsWindow"));
-  if (!STATS_WINDOWS.some((option) => option === statsWindow)) {
-    throw new Error(`Unknown stats window: ${statsWindow}`);
-  }
-  const cookieStore = await cookies();
-  cookieStore.set(STATS_WINDOW_COOKIE, String(statsWindow), {
-    maxAge: COOKIE_MAX_AGE,
-    sameSite: "lax",
-  });
   refresh();
 }
 

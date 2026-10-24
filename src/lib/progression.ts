@@ -17,6 +17,9 @@ export const FOCUS_LABELS: Record<Focus, string> = {
 
 export const XP_PER_GAME = 100;
 
+// Level 100 would take infinite XP, so 99 is the real top
+export const MAX_LEVEL = 99;
+
 // How often auto mode bowls a shot
 export const AUTO_SHOT_INTERVAL_MS = 4000;
 

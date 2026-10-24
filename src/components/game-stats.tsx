@@ -1,39 +1,22 @@
 import { CaretRightIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "cn";
-import { setStatsWindow } from "@/app/actions";
 import { ScoreChart } from "@/components/score-chart";
 import { Scorecard } from "@/components/scorecard";
 import { StatGrid, StatTile } from "@/components/stat-grid";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { formatNumber } from "@/lib/format";
 import type { RecentGame } from "@/lib/game-history";
-import { STATS_WINDOWS, summarizeGames, type StatsWindow } from "@/lib/stats";
+import { STATS_GAMES, summarizeGames } from "@/lib/stats";
 
 export function GameStats({
   games,
-  statsWindow,
 }: {
   // Newest first
   games: RecentGame[];
-  statsWindow: StatsWindow;
 }) {
   return (
     <section className="w-full max-w-sm">
-      <h2 className="mb-3 text-sm font-semibold">Games</h2>
-      <form action={setStatsWindow} className="mb-4 flex gap-2">
-        {STATS_WINDOWS.map((option) => (
-          <Button
-            key={option}
-            type="submit"
-            name="statsWindow"
-            value={option}
-            variant={option === statsWindow ? "default" : "secondary"}
-            aria-pressed={option === statsWindow}
-          >
-            Last {option}
-          </Button>
-        ))}
-      </form>
+      <h2 className="mb-3 text-sm font-semibold">Last {STATS_GAMES} games</h2>
       {games.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Finish a game and your stats will show up here.

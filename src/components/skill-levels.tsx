@@ -4,6 +4,7 @@ import {
   FOCUS_BOOST_LEVELS,
   FOCUS_LABELS,
   levelFromXp,
+  MAX_LEVEL,
   SKILL_AREAS,
   xpForLevel,
   type Focus,
@@ -25,7 +26,7 @@ export function SkillLevels({ xp, focus }: { xp: Xp; focus: Focus }) {
             <li key={area}>
               <div className="mb-1.5 flex justify-between gap-3">
                 <span>
-                  {FOCUS_LABELS[area]} · Level {level}
+                  {FOCUS_LABELS[area]} · Level {level} of {MAX_LEVEL}
                   {area === focus && ` (+${FOCUS_BOOST_LEVELS} from focus)`}
                 </span>
                 <span className="font-mono tabular-nums">

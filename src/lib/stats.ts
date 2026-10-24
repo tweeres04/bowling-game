@@ -1,9 +1,7 @@
 import { buildFrames } from "@/lib/bowling";
 
-// How many recent games the stats section can cover
-export const STATS_WINDOWS = [5, 10, 20] as const;
-
-export type StatsWindow = (typeof STATS_WINDOWS)[number];
+// How many recent games the stats section covers
+export const STATS_GAMES = 20;
 
 type GameCounts = {
   strikes: number;
@@ -61,8 +59,7 @@ function sum(values: number[]) {
 export function summarizeGames(games: { score: number; rolls: number[] }[]) {
   const scores = games.map((game) => game.score);
   const counts = games.map((game) => countGame(game.rolls));
-  const total = (key: keyof GameCounts) =>
-    sum(counts.map((game) => game[key]));
+  const total = (key: keyof GameCounts) => sum(counts.map((game) => game[key]));
 
   return {
     average: Math.round(sum(scores) / games.length),
