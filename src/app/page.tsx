@@ -14,7 +14,7 @@ export default function Home() {
           height={48}
           className="[image-rendering:pixelated]"
         />
-        Auto bowling
+        Idle bowling
       </h1>
       <Suspense fallback={<BowlingGameSkeleton />}>
         <BowlingGame />

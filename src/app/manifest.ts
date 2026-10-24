@@ -6,8 +6,8 @@ export const APP_BACKGROUND = "#0a0f1a";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Auto bowling",
-    short_name: "Auto bowling",
+    name: "Idle bowling",
+    short_name: "Idle bowling",
     description: "An idle bowling game",
     start_url: "/",
     display: "standalone",

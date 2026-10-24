@@ -15,13 +15,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Auto bowling",
+  title: "Idle bowling",
   description: "An idle bowling game",
   // iOS ignores most of the manifest; this makes the home screen version
   // open full screen with its own name
   appleWebApp: {
     capable: true,
-    title: "Auto bowling",
+    title: "Idle bowling",
     statusBarStyle: "black",
   },
 };
