@@ -3,7 +3,9 @@ import { desc, eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { games } from '@/db/schema'
 
-export type RecentGame = Awaited<ReturnType<typeof getRecentGames>>[number]
+export type RecentGame = Awaited<
+	ReturnType<typeof getRecentGames>
+>['games'][number]
 
 // Newest first, each numbered by where it falls in the player's career
 export async function getRecentGames(playerId: string, count: number) {
@@ -17,5 +19,11 @@ export async function getRecentGames(playerId: string, count: number) {
 			.limit(count),
 		db.$count(games, byPlayer),
 	])
-	return recent.map((game, index) => ({ ...game, number: totalGames - index }))
+	return {
+		games: recent.map((game, index) => ({
+			...game,
+			number: totalGames - index,
+		})),
+		totalGames,
+	}
 }

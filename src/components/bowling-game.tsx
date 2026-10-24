@@ -12,6 +12,7 @@ import { ShotOdds } from '@/components/shot-odds'
 import { SkillLevels } from '@/components/skill-levels'
 import { Button } from '@/components/ui/button'
 import { isGameOver, pinsStandingForNextRoll } from '@/lib/bowling'
+import { formatNumber } from '@/lib/format'
 import { getRecentGames } from '@/lib/game-history'
 import { getPlayerForDisplay, xpOf } from '@/lib/player'
 import { getAutoMode, getSceneView, getShowScene } from '@/lib/settings'
@@ -26,10 +27,15 @@ export async function BowlingGame() {
 		getAutoMode(),
 	])
 	// A visitor who hasn't bowled yet has no player row, so no games
-	const recentGames =
-		'id' in player ? await getRecentGames(player.id, STATS_GAMES) : []
+	const { games: recentGames, totalGames } =
+		'id' in player
+			? await getRecentGames(player.id, STATS_GAMES)
+			: { games: [], totalGames: 0 }
 	const xp = xpOf(player)
 	const gameOver = isGameOver(player.rolls)
+	// A finished game is saved the moment it ends, so until you start the
+	// next one, the scorecard shows a game that's already counted
+	const gameNumber = gameOver ? totalGames : totalGames + 1
 	// After the last frame, the next shot is the new game's first ball
 	const pinsStanding = gameOver ? 10 : pinsStandingForNextRoll(player.rolls)
 
@@ -44,7 +50,12 @@ export async function BowlingGame() {
 					view={sceneView}
 				/>
 			)}
-			<Scorecard rolls={player.rolls} />
+			<div className="w-full">
+				<h2 className="mb-2 text-sm font-semibold">
+					Game {formatNumber(gameNumber)}
+				</h2>
+				<Scorecard rolls={player.rolls} />
+			</div>
 
 			<ShotControls savedAutoOn={autoMode}>
 				{gameOver ? (
@@ -82,7 +93,13 @@ export async function BowlingGame() {
 export function BowlingGameSkeleton() {
 	return (
 		<div className="flex flex-col items-center gap-8">
-			<Scorecard rolls={[]} />
+			<div className="w-full">
+				{/* Holds the game number's line so the scorecard doesn't jump */}
+				<p className="invisible mb-2 text-sm" aria-hidden>
+					Game
+				</p>
+				<Scorecard rolls={[]} />
+			</div>
 		</div>
 	)
 }
