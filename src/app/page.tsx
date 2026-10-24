@@ -19,6 +19,12 @@ export default function Home() {
       <Suspense fallback={<BowlingGameSkeleton />}>
         <BowlingGame />
       </Suspense>
+      <footer className="text-center text-sm text-muted-foreground">
+        By{" "}
+        <a href="https://tweeres.ca" className="text-foreground underline">
+          Tyler Weeres
+        </a>
+      </footer>
     </main>
   );
 }

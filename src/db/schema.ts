@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const players = sqliteTable("players", {
   id: text()
@@ -22,14 +22,20 @@ export const players = sqliteTable("players", {
 });
 
 // Every finished game, kept for progress history
-export const games = sqliteTable("games", {
-  id: integer().primaryKey({ autoIncrement: true }),
-  playerId: text()
-    .notNull()
-    .references(() => players.id),
-  score: integer().notNull(),
-  rolls: text({ mode: "json" }).$type<number[]>().notNull(),
-  finishedAt: integer({ mode: "timestamp" })
-    .notNull()
-    .$defaultFn(() => new Date()),
-});
+export const games = sqliteTable(
+  "games",
+  {
+    id: integer().primaryKey({ autoIncrement: true }),
+    playerId: text()
+      .notNull()
+      .references(() => players.id),
+    score: integer().notNull(),
+    rolls: text({ mode: "json" }).$type<number[]>().notNull(),
+    finishedAt: integer({ mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  // Stats read each player's latest games on every page load, and auto and
+  // away bowling add hundreds of games a day
+  (table) => [index("games_player_recent").on(table.playerId, table.id)],
+);

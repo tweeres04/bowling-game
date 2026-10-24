@@ -2,6 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { refresh } from "next/cache";
+import { cookies } from "next/headers";
 import { db } from "@/db";
 import { games, players } from "@/db/schema";
 import { isGameOver } from "@/lib/bowling";
@@ -13,7 +14,14 @@ import {
   type FinishedGame,
   type PlayState,
 } from "@/lib/play";
-import { getOrCreatePlayer, xpOf, type Player } from "@/lib/player";
+import { STATS_WINDOW_COOKIE } from "@/lib/game-history";
+import {
+  COOKIE_MAX_AGE,
+  getOrCreatePlayer,
+  xpOf,
+  type Player,
+} from "@/lib/player";
+import { STATS_WINDOWS } from "@/lib/stats";
 import { AWAY_SHOT_INTERVAL_MS } from "@/lib/progression";
 
 function playStateOf(player: Player): PlayState {
@@ -111,5 +119,18 @@ export async function setFocus(formData: FormData) {
   }
   const player = await getOrCreatePlayer();
   await db.update(players).set({ focus }).where(eq(players.id, player.id));
+  refresh();
+}
+
+export async function setStatsWindow(formData: FormData) {
+  const statsWindow = Number(formData.get("statsWindow"));
+  if (!STATS_WINDOWS.some((option) => option === statsWindow)) {
+    throw new Error(`Unknown stats window: ${statsWindow}`);
+  }
+  const cookieStore = await cookies();
+  cookieStore.set(STATS_WINDOW_COOKIE, String(statsWindow), {
+    maxAge: COOKIE_MAX_AGE,
+    sameSite: "lax",
+  });
   refresh();
 }

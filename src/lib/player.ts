@@ -6,8 +6,9 @@ import { players } from "@/db/schema";
 
 const PLAYER_COOKIE = "playerId";
 
-// Browsers cap cookie lifetimes at 400 days; it's re-set on every action
-const PLAYER_COOKIE_MAX_AGE = 400 * 24 * 60 * 60;
+// Browsers cap cookie lifetimes at 400 days. The player cookie is re-set on
+// every action, so it only expires after 400 days without playing.
+export const COOKIE_MAX_AGE = 400 * 24 * 60 * 60;
 
 export type Player = typeof players.$inferSelect;
 
@@ -39,7 +40,7 @@ export async function getOrCreatePlayer() {
     existing ?? (await db.insert(players).values({}).returning())[0];
 
   cookieStore.set(PLAYER_COOKIE, player.id, {
-    maxAge: PLAYER_COOKIE_MAX_AGE,
+    maxAge: COOKIE_MAX_AGE,
     httpOnly: true,
     sameSite: "lax",
   });
