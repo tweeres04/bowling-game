@@ -10,6 +10,7 @@
     "deploy": "./deploy.sh",
     "db:push": "drizzle-kit push",
     "dev:away": "node scripts/simulate-away.mjs",
+    "og:image": "./scripts/generate-og-image.sh",
     "start:docker": "drizzle-kit push && next start"
   },
   "dependencies": {

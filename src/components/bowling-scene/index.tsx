@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import type { SceneView } from "@/lib/scene-view";
+import type { Pose } from "./scene";
 
 // Three.js only runs in the browser, and loading it lazily keeps it out of
 // the first page load
@@ -25,5 +26,21 @@ export function BowlingSceneBackground({
     >
       <BowlingScene shotKey={shotKey} pinsDown={pinsDown} view={view} />
     </div>
+  );
+}
+
+// The share image's moment: the bowler in his follow through, and a full
+// rack of pins flying
+const POSTER_POSE: Pose = { bowler: 1.5, pins: 3.35 };
+
+// A still, full brightness version of the scene, for the share image
+export function BowlingScenePoster() {
+  return (
+    <BowlingScene
+      shotKey={null}
+      pinsDown={10}
+      view="angled"
+      posed={POSTER_POSE}
+    />
   );
 }

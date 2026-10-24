@@ -267,9 +267,11 @@ function launchPins(pinsDown: number): (PinFlight | null)[] {
 function Pins({
   throwStart,
   flights,
+  posedAt,
 }: {
   throwStart: React.RefObject<number>;
   flights: React.RefObject<(PinFlight | null)[]>;
+  posedAt?: number;
 }) {
   // Low segment count keeps the faceted look
   const pinGeometry = useMemo(() => {
@@ -289,7 +291,7 @@ function Pins({
   const pins = useRef<(THREE.Group | null)[]>([]);
 
   useFrame((state) => {
-    const t = performance.now() / 1000 - throwStart.current;
+    const t = posedAt ?? performance.now() / 1000 - throwStart.current;
     const resetAt = THROW_LENGTH + PIN_FLIGHT;
 
     PIN_SPOTS.forEach(({ row, position }, index) => {
@@ -319,7 +321,7 @@ function Pins({
       );
     });
 
-    if (t < resetAt) state.invalidate();
+    if (posedAt === undefined && t < resetAt) state.invalidate();
   });
 
   return PIN_SPOTS.map(({ position }, index) => (
@@ -346,9 +348,11 @@ function Pins({
 function Throw({
   shotKey,
   pinsDown,
+  posed,
 }: {
   shotKey: number | null;
   pinsDown: number;
+  posed?: Pose;
 }) {
   // Seconds from the browser's clock, not three's: three's clock only
   // advances when a frame draws, and frames stop between throws. Starts far
@@ -371,10 +375,17 @@ function Throw({
     startThrow();
   }, [shotKey]);
 
+  // A still image has its pins in the air from the start
+  useEffect(() => {
+    if (!posed) return;
+    flights.current = launchPins(pinsDown);
+    invalidate();
+  }, [posed, pinsDown, invalidate]);
+
   return (
     <>
-      <Pins throwStart={throwStart} flights={flights} />
-      <Bowler throwStart={throwStart} />
+      <Pins throwStart={throwStart} flights={flights} posedAt={posed?.pins} />
+      <Bowler throwStart={throwStart} posedAt={posed?.bowler} />
     </>
   );
 }
@@ -396,7 +407,13 @@ function Limb({
   );
 }
 
-function Bowler({ throwStart }: { throwStart: React.RefObject<number> }) {
+function Bowler({
+  throwStart,
+  posedAt,
+}: {
+  throwStart: React.RefObject<number>;
+  posedAt?: number;
+}) {
   const bowler = useRef<THREE.Group>(null);
   const upperBody = useRef<THREE.Group>(null);
   const rightArm = useRef<THREE.Group>(null);
@@ -408,7 +425,7 @@ function Bowler({ throwStart }: { throwStart: React.RefObject<number> }) {
   const releasePoint = useMemo(() => new THREE.Vector3(), []);
 
   useFrame((state) => {
-    const t = performance.now() / 1000 - throwStart.current;
+    const t = posedAt ?? performance.now() / 1000 - throwStart.current;
     // Once the ball reaches the pins, snap back to the starting pose
     const poseTime = t < THROW_LENGTH ? t : 0;
 
@@ -420,6 +437,9 @@ function Bowler({ throwStart }: { throwStart: React.RefObject<number> }) {
     rightLeg.current!.rotation.x = sample(POSES.rightLeg, poseTime);
 
     const ballMesh = ball.current!;
+    // A still shows the pins already flying, so a released ball is down in
+    // the pins, out of sight
+    ballMesh.visible = posedAt === undefined || t < RELEASE_AT;
     const rollProgress = (t - RELEASE_AT) / ROLL_TIME;
     if (t < RELEASE_AT || t >= THROW_LENGTH) {
       // In hand: before the release, and back at the start after the roll
@@ -440,7 +460,7 @@ function Bowler({ throwStart }: { throwStart: React.RefObject<number> }) {
     }
 
     // Only keep drawing frames while the throw is playing
-    if (t < THROW_LENGTH) state.invalidate();
+    if (posedAt === undefined && t < THROW_LENGTH) state.invalidate();
   });
 
   return (
@@ -552,18 +572,27 @@ function SceneCamera({ view }: { view: SceneView }) {
   return null;
 }
 
+// Seconds into a throw to freeze the bowler and the pins at, for a still
+// image. They're posed separately so one frame can show both the swing and
+// the pins flying, which are about 2 seconds apart in a real throw.
+export type Pose = { bowler: number; pins: number };
+
 export default function BowlingScene({
   shotKey,
   pinsDown,
   view,
+  posed,
 }: {
   shotKey: number | null;
   pinsDown: number;
   view: SceneView;
+  posed?: Pose;
 }) {
   return (
     <Canvas
-      frameloop="demand"
+      // Draws only while something moves. A still keeps drawing, so a
+      // screenshot always catches a finished frame.
+      frameloop={posed ? "always" : "demand"}
       // Capped at 2x so high density phones don't render more than they need
       dpr={PIXEL_ART ? PIXEL_SCALE : [1, 2]}
       // Stencil for the face mask (three leaves it off by default)
@@ -583,7 +612,7 @@ export default function BowlingScene({
       />
       <SceneCamera view={view} />
       <Lane />
-      <Throw shotKey={shotKey} pinsDown={pinsDown} />
+      <Throw shotKey={shotKey} pinsDown={pinsDown} posed={posed} />
     </Canvas>
   );
 }

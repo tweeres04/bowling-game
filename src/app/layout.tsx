@@ -14,9 +14,26 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const DESCRIPTION =
+  "You start out rolling gutter balls and bowling 70s. Pick what to practice, let it auto bowl, and it keeps improving while you're away.";
+
 export const metadata: Metadata = {
+  // Share previews need the share image as a full URL
+  metadataBase: new URL("https://idle-bowling.tweeres.com"),
   title: "Idle bowling",
-  description: "An idle bowling game",
+  description: DESCRIPTION,
+  openGraph: {
+    title: "Idle bowling",
+    description: DESCRIPTION,
+    url: "/",
+    siteName: "Idle bowling",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Idle bowling",
+    description: DESCRIPTION,
+  },
   // iOS ignores most of the manifest; this makes the home screen version
   // open full screen with its own name
   appleWebApp: {
