@@ -1,19 +1,14 @@
 import { Progress } from "@/components/ui/progress";
+import { formatNumber } from "@/lib/format";
 import {
   FOCUS_BOOST_LEVELS,
   FOCUS_LABELS,
   levelFromXp,
+  SKILL_AREAS,
   xpForLevel,
   type Focus,
-  type SkillArea,
   type Xp,
 } from "@/lib/progression";
-
-const SKILL_AREAS: SkillArea[] = ["firstBall", "spares"];
-
-function formatXp(xp: number) {
-  return xp.toLocaleString("en-US");
-}
 
 export function SkillLevels({ xp, focus }: { xp: Xp; focus: Focus }) {
   return (
@@ -34,7 +29,7 @@ export function SkillLevels({ xp, focus }: { xp: Xp; focus: Focus }) {
                   {area === focus && ` (+${FOCUS_BOOST_LEVELS} from focus)`}
                 </span>
                 <span className="font-mono tabular-nums">
-                  {formatXp(xpIntoLevel)} / {formatXp(levelCostXp)} XP
+                  {formatNumber(xpIntoLevel)} / {formatNumber(levelCostXp)} XP
                 </span>
               </div>
               <Progress

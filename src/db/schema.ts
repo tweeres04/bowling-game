@@ -14,6 +14,8 @@ export const players = sqliteTable("players", {
     .$type<number[]>()
     .notNull()
     .$defaultFn(() => []),
+  // Away progress is earned from here; null until the first shot
+  lastShotAt: integer({ mode: "timestamp_ms" }),
   createdAt: integer({ mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),

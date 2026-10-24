@@ -1,15 +1,34 @@
 "use client";
 
-import { useEffect, useEffectEvent, useState, useTransition } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
 import { PauseIcon, PlayIcon } from "@phosphor-icons/react";
 import { autoBowl } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { AUTO_SHOT_INTERVAL_MS } from "@/lib/progression";
 
+function subscribeToVisibility(onChange: () => void) {
+  document.addEventListener("visibilitychange", onChange);
+  return () => document.removeEventListener("visibilitychange", onChange);
+}
+
 // The Shoot or New game form comes in as children, with the auto mode
 // toggle beside it and its timer bar underneath
 export function ShotControls({ children }: { children: React.ReactNode }) {
   const [autoOn, setAutoOn] = useState(false);
+  // Auto mode pauses in a hidden tab, where away bowling takes over, and
+  // picks back up when you return
+  const visible = useSyncExternalStore(
+    subscribeToVisibility,
+    () => document.visibilityState === "visible",
+    () => true,
+  );
+  const running = autoOn && visible;
   // Bumped every tick so the timer bar restarts in step with the shots
   const [tick, setTick] = useState(0);
   const [bowling, startBowling] = useTransition();
@@ -23,10 +42,10 @@ export function ShotControls({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    if (!autoOn) return;
+    if (!running) return;
     const timer = setInterval(bowlIfReady, AUTO_SHOT_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [autoOn]);
+  }, [running]);
 
   return (
     <div className="w-full space-y-3">
@@ -42,7 +61,7 @@ export function ShotControls({ children }: { children: React.ReactNode }) {
           {autoOn ? <PauseIcon weight="bold" /> : <PlayIcon weight="bold" />}
         </Button>
       </div>
-      {autoOn && (
+      {running && (
         <div className="h-1 overflow-hidden rounded-full bg-muted">
           <div
             key={tick}

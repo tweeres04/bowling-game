@@ -3,6 +3,7 @@ import {
   BowlingBallIcon,
 } from "@phosphor-icons/react/ssr";
 import { newGame, shoot } from "@/app/actions";
+import { AwaySummary } from "@/components/away-summary";
 import { FocusPicker } from "@/components/focus-picker";
 import { Scorecard } from "@/components/scorecard";
 import { ShotControls } from "@/components/shot-controls";
@@ -54,6 +55,7 @@ export async function BowlingGame() {
       </div>
 
       <SkillLevels xp={xp} focus={player.focus} />
+      <AwaySummary />
     </div>
   );
 }
