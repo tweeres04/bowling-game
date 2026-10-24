@@ -1,6 +1,7 @@
 import { CaretRightIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "cn";
 import { setStatsWindow } from "@/app/actions";
+import { ScoreChart } from "@/components/score-chart";
 import { Scorecard } from "@/components/scorecard";
 import { StatGrid, StatTile } from "@/components/stat-grid";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -48,6 +49,7 @@ function RecentGames({ games }: { games: RecentGame[] }) {
   const stats = summarizeGames(games);
   return (
     <div className="space-y-6">
+      <ScoreChart games={games} average={stats.average} />
       <StatGrid columns={3}>
         <StatTile label="Average" value={stats.average} />
         <StatTile label="Best" value={stats.best} />
