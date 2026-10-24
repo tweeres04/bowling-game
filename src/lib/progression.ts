@@ -20,6 +20,10 @@ export const XP_PER_GAME = 100;
 // How often auto mode bowls a shot
 export const AUTO_SHOT_INTERVAL_MS = 4000;
 
+// The Shoot button rests this long after each click, so manual shooting
+// tops out at 4 shots a second
+export const MANUAL_SHOT_COOLDOWN_MS = 250;
+
 // While you're away (tab closed, hidden, or auto mode off) you still bowl,
 // 10x slower than auto mode, for up to 4 hours
 export const AWAY_SHOT_INTERVAL_MS = AUTO_SHOT_INTERVAL_MS * 10;
