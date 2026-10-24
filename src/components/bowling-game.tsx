@@ -3,6 +3,7 @@ import { newGame } from '@/app/actions'
 import { AwaySummary } from '@/components/away-summary'
 import { BowlingSceneBackground } from '@/components/bowling-scene'
 import { FocusPicker } from '@/components/focus-picker'
+import { MixpanelBrowser } from '@/components/mixpanel-browser'
 import { GameStats } from '@/components/game-stats'
 import { Scorecard } from '@/components/scorecard'
 import { SettingsDialog } from '@/components/settings-dialog'
@@ -12,6 +13,7 @@ import { ShotOdds } from '@/components/shot-odds'
 import { SkillLevels } from '@/components/skill-levels'
 import { Button } from '@/components/ui/button'
 import { isGameOver, pinsStandingForNextRoll } from '@/lib/bowling'
+import { mixpanelToken } from '@/lib/analytics'
 import { formatNumber } from '@/lib/format'
 import { getRecentGames } from '@/lib/game-history'
 import { getPlayerForDisplay, xpOf } from '@/lib/player'
@@ -41,6 +43,12 @@ export async function BowlingGame() {
 
 	return (
 		<div className="flex flex-col items-center gap-8">
+			{mixpanelToken && (
+				<MixpanelBrowser
+					token={mixpanelToken}
+					playerId={'id' in player ? player.id : null}
+				/>
+			)}
 			{/* Changes on every shot, including away catch-ups. Not rendering it
           at all when off also skips downloading three.js. */}
 			{showScene && (

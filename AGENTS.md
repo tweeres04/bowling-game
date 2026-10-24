@@ -23,6 +23,7 @@ This project uses **Mixpanel** for product analytics. Don't add other analytics 
 
 - **One client:** Mixpanel is initialized once in `src/lib/analytics.ts`. Track through its `trackEvent(playerId, event, properties)` helper, and don't import `mixpanel` anywhere else.
 - **Profiles and location:** `setPlayerProfile` keeps current state on the player's profile (levels, focus), and `setPlayerProfileOnce` records facts that never change (`$created`). Every call passes the player's IP from `x-forwarded-for`, so Mixpanel places them in the right spot. Callers don't await any of these.
+- **Browser SDK:** `src/components/mixpanel-browser.tsx` loads `mixpanel-browser` for session replay (unmasked, no autocapture or page views) and adds browser details to the profile. It tracks no events itself. It sends through the `/mp` rewrite in `next.config.ts`.
 - **Identity:** there's no login. `distinct_id` is the anonymous player ID from the player cookie (`players.id`), so there's no identify or reset.
 - **Naming:** event names are `snake_case`, past tense (`noun_verbed`). Property names are `snake_case`, and booleans start with `is_`.
 - **When to track:** after the action succeeds (after the database write), never on click. Don't track in loops, like once per away shot.

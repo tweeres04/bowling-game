@@ -3,8 +3,8 @@ import { headers } from 'next/headers'
 import Mixpanel from 'mixpanel'
 
 // Only production sets the token, so local play stays out of the real data
-const token = process.env.MIXPANEL_TOKEN
-const mixpanel = token ? Mixpanel.init(token) : null
+export const mixpanelToken = process.env.MIXPANEL_TOKEN
+const mixpanel = mixpanelToken ? Mixpanel.init(mixpanelToken) : null
 
 type Properties = Record<string, string | number | boolean>
 
