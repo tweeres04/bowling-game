@@ -16,14 +16,15 @@ import { Button } from "@/components/ui/button";
 import { isGameOver, pinsStandingForNextRoll } from "@/lib/bowling";
 import { getRecentGames, getStatsWindow } from "@/lib/game-history";
 import { getPlayerForDisplay, xpOf } from "@/lib/player";
-import { getShowScene } from "@/lib/settings";
+import { getSceneView, getShowScene } from "@/lib/settings";
 import { skillForShot } from "@/lib/progression";
 
 export async function BowlingGame() {
-  const [player, statsWindow, showScene] = await Promise.all([
+  const [player, statsWindow, showScene, sceneView] = await Promise.all([
     getPlayerForDisplay(),
     getStatsWindow(),
     getShowScene(),
+    getSceneView(),
   ]);
   // A visitor who hasn't bowled yet has no player row, so no games
   const recentGames =
@@ -40,6 +41,7 @@ export async function BowlingGame() {
       {showScene && (
         <BowlingSceneBackground
           shotKey={player.lastShotAt?.getTime() ?? null}
+          view={sceneView}
         />
       )}
       <Scorecard rolls={player.rolls} />
@@ -71,7 +73,7 @@ export async function BowlingGame() {
           pinsStanding={pinsStanding}
           skill={skillForShot(xp, player.focus, pinsStanding)}
         />
-        <SettingsDialog showScene={showScene} />
+        <SettingsDialog showScene={showScene} sceneView={sceneView} />
       </div>
 
       <SkillLevels xp={xp} focus={player.focus} />

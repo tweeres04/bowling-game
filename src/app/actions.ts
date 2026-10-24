@@ -21,7 +21,8 @@ import {
   xpOf,
   type Player,
 } from "@/lib/player";
-import { SHOW_SCENE_COOKIE } from "@/lib/settings";
+import { SCENE_VIEW_COOKIE, SHOW_SCENE_COOKIE } from "@/lib/settings";
+import { SCENE_VIEWS, type SceneView } from "@/lib/scene-view";
 import { STATS_WINDOWS } from "@/lib/stats";
 import { AWAY_SHOT_INTERVAL_MS } from "@/lib/progression";
 
@@ -140,6 +141,16 @@ export async function setShowScene(show: boolean) {
   if (typeof show !== "boolean") throw new Error(`Unknown setting: ${show}`);
   const cookieStore = await cookies();
   cookieStore.set(SHOW_SCENE_COOKIE, String(show), {
+    maxAge: COOKIE_MAX_AGE,
+    sameSite: "lax",
+  });
+  refresh();
+}
+
+export async function setSceneView(view: SceneView) {
+  if (!SCENE_VIEWS.includes(view)) throw new Error(`Unknown view: ${view}`);
+  const cookieStore = await cookies();
+  cookieStore.set(SCENE_VIEW_COOKIE, view, {
     maxAge: COOKIE_MAX_AGE,
     sameSite: "lax",
   });

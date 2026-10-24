@@ -3,13 +3,16 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import type { SceneView } from "@/lib/scene-view";
 
 // On: rendered at a fraction of screen resolution and scaled up with crisp
 // pixels, to match the pixel art icon. Off: sharp and antialiased.
 const PIXEL_ART = true;
 const PIXEL_SCALE = 0.25;
 
-const LANE_LENGTH = 12;
+// Shorter than a real lane so the bowler isn't tiny when the whole lane has
+// to fit across a narrow phone screen
+const LANE_LENGTH = 8;
 const LANE_WIDTH = 1.05;
 const BALL_RADIUS = 0.11;
 
@@ -356,26 +359,73 @@ function Bowler({ shotKey }: { shotKey: number | null }) {
   );
 }
 
-export default function BowlingScene({ shotKey }: { shotKey: number | null }) {
+const CAMERA_FOV: Record<SceneView, number> = { side: 40, behind: 55 };
+
+function SceneCamera({ view }: { view: SceneView }) {
+  // Prop changes don't draw a frame on their own in demand mode
+  const invalidate = useThree((state) => state.invalidate);
+  useEffect(() => invalidate(), [view, invalidate]);
+
+  useFrame((state) => {
+    const camera = state.camera as THREE.PerspectiveCamera;
+    if (camera.fov !== CAMERA_FOV[view]) {
+      camera.fov = CAMERA_FOV[view];
+      camera.updateProjectionMatrix();
+    }
+
+    if (view === "behind") {
+      // Behind and a little to the right of the bowler, looking down the lane
+      camera.position.set(0.5, 2.3, 5.8);
+      camera.lookAt(0, 0.4, -LANE_LENGTH / 2);
+      return;
+    }
+
+    // Off the bowler's right side, so the lane runs left to right with the
+    // bowler on the left and the pins on the right. Backs off far enough
+    // that the whole lane fits the screen's width, whatever its shape.
+    const { size } = state;
+    const halfVertical = THREE.MathUtils.degToRad(camera.fov / 2);
+    const halfHorizontal = Math.atan(
+      Math.tan(halfVertical) * (size.width / size.height),
+    );
+    // From just behind the bowler's start to the back of the pin deck
+    const nearEnd = 3.2;
+    const farEnd = -LANE_LENGTH - 1.4;
+    const centerZ = (nearEnd + farEnd) / 2;
+    const distance = (nearEnd - farEnd) / 2 / Math.tan(halfHorizontal);
+    camera.position.set(distance, 1.5 + distance * 0.12, centerZ);
+    camera.lookAt(0, 0.8, centerZ);
+  });
+  return null;
+}
+
+export default function BowlingScene({
+  shotKey,
+  view,
+}: {
+  shotKey: number | null;
+  view: SceneView;
+}) {
   return (
     <Canvas
       frameloop="demand"
       // Capped at 2x so high density phones don't render more than they need
       dpr={PIXEL_ART ? PIXEL_SCALE : [1, 2]}
       gl={{ antialias: !PIXEL_ART }}
-      // Behind the bowler and wide, since the page is usually a tall phone
-      // screen where a side-on view would crop the lane
-      camera={{ position: [0.5, 2.3, 5.8], fov: 55 }}
-      onCreated={({ camera }) => camera.lookAt(0, 0.4, -LANE_LENGTH / 2)}
       className={
         PIXEL_ART ? "[&_canvas]:[image-rendering:pixelated]" : undefined
       }
     >
       {/* Fill light is added evenly on top of the toon bands, so it stays low
-          to keep the shadow band clearly darker. The key light comes from
-          the upper left so the camera sees a lit side and a shadow side. */}
+          to keep the shadow band clearly darker. The key light is above and
+          off to one side of each camera, so it sees lit faces with a shadow
+          side. */}
       <hemisphereLight args={["#ffffff", "#445066", 0.5]} />
-      <directionalLight position={[-3, 5, 3]} intensity={2.6} />
+      <directionalLight
+        position={view === "side" ? [5, 6, 3] : [-3, 5, 3]}
+        intensity={2.6}
+      />
+      <SceneCamera view={view} />
       <Lane />
       <Pins />
       <Bowler shotKey={shotKey} />
