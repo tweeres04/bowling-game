@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { SceneView } from "@/lib/scene-view";
 
@@ -22,6 +22,9 @@ const BALL_RADIUS = 0.11;
 const RELEASE_AT = 1.15;
 const ROLL_TIME = 1.8;
 const THROW_LENGTH = RELEASE_AT + ROLL_TIME;
+// Knocked pins fly for this long after the ball arrives, then the rack resets
+const PIN_FLIGHT = 0.9;
+const GRAVITY = -9.8;
 
 const COLORS = {
   lane: "#c98f56",
@@ -190,7 +193,57 @@ function Lane() {
   );
 }
 
-function Pins() {
+// Head pin first, then rows of 2, 3 and 4 behind it
+const PIN_SPOTS = [0, 1, 2, 3].flatMap((row) =>
+  Array.from({ length: row + 1 }, (_, index) => ({
+    row,
+    position: new THREE.Vector3(
+      (index - row / 2) * 0.3,
+      0,
+      -LANE_LENGTH + 0.6 - row * 0.26,
+    ),
+  })),
+);
+
+// Which pins go down first for a given count: the head pin, then working back
+// through the pocket a right hander hits (indexes into PIN_SPOTS)
+const KNOCK_ORDER = [0, 2, 1, 4, 5, 3, 8, 7, 9, 6];
+
+type PinFlight = { velocity: THREE.Vector3; spin: THREE.Vector3 };
+
+// Launches pins up and away from the head pin, with a random tumble
+function launchPins(pinsDown: number): (PinFlight | null)[] {
+  const knocked = new Set(KNOCK_ORDER.slice(0, pinsDown));
+  const impact = PIN_SPOTS[0].position;
+  return PIN_SPOTS.map(({ position }, index) => {
+    if (!knocked.has(index)) return null;
+    const away = new THREE.Vector2(
+      position.x - impact.x + (Math.random() - 0.5) * 0.3,
+      position.z - impact.z - 0.3,
+    ).normalize();
+    const speed = 1.5 + Math.random() * 1.5;
+    return {
+      velocity: new THREE.Vector3(
+        away.x * speed,
+        3.5 + Math.random() * 2,
+        away.y * speed,
+      ),
+      spin: new THREE.Vector3(
+        (Math.random() - 0.5) * 20,
+        (Math.random() - 0.5) * 6,
+        (Math.random() - 0.5) * 20,
+      ),
+    };
+  });
+}
+
+function Pins({
+  throwStart,
+  flights,
+}: {
+  throwStart: React.RefObject<number>;
+  flights: React.RefObject<(PinFlight | null)[]>;
+}) {
   // Low segment count keeps the faceted look
   const pinGeometry = useMemo(() => {
     const profile = [
@@ -206,18 +259,50 @@ function Pins() {
     ].map(([radius, height]) => new THREE.Vector2(radius, height));
     return new THREE.LatheGeometry(profile, 8);
   }, []);
+  const pins = useRef<(THREE.Group | null)[]>([]);
 
-  // Head pin first, then rows of 2, 3 and 4 behind it
-  const positions = [0, 1, 2, 3].flatMap((row) =>
-    Array.from(
-      { length: row + 1 },
-      (_, index) =>
-        [(index - row / 2) * 0.3, 0, -LANE_LENGTH + 0.6 - row * 0.26] as const,
-    ),
-  );
+  useFrame((state) => {
+    const t = performance.now() / 1000 - throwStart.current;
+    const resetAt = THROW_LENGTH + PIN_FLIGHT;
 
-  return positions.map((position) => (
-    <group key={position.join()} position={position}>
+    PIN_SPOTS.forEach(({ row, position }, index) => {
+      const pin = pins.current[index]!;
+      const flight = flights.current[index];
+      // Back rows get hit a beat after the front
+      const airborne = t - THROW_LENGTH - row * 0.05;
+      if (!flight || t >= resetAt || airborne < 0) {
+        pin.position.copy(position);
+        pin.rotation.set(0, 0, 0);
+        return;
+      }
+      // Frozen where it lands, so it doesn't fall through the lane
+      const landsAt = (2 * flight.velocity.y) / -GRAVITY;
+      const flying = Math.min(airborne, landsAt);
+      pin.position.set(
+        position.x + flight.velocity.x * flying,
+        position.y +
+          flight.velocity.y * flying +
+          0.5 * GRAVITY * flying * flying,
+        position.z + flight.velocity.z * flying,
+      );
+      pin.rotation.set(
+        flight.spin.x * flying,
+        flight.spin.y * flying,
+        flight.spin.z * flying,
+      );
+    });
+
+    if (t < resetAt) state.invalidate();
+  });
+
+  return PIN_SPOTS.map(({ position }, index) => (
+    <group
+      key={index}
+      ref={(pin) => {
+        pins.current[index] = pin;
+      }}
+      position={position}
+    >
       <mesh geometry={pinGeometry}>
         <Material color={COLORS.pin} />
       </mesh>
@@ -227,6 +312,44 @@ function Pins() {
       </mesh>
     </group>
   ));
+}
+
+// Plays one throw each time shotKey changes, skipping the first render, and
+// knocks down as many pins as the shot did
+function Throw({
+  shotKey,
+  pinsDown,
+}: {
+  shotKey: number | null;
+  pinsDown: number;
+}) {
+  // Seconds from the browser's clock, not three's: three's clock only
+  // advances when a frame draws, and frames stop between throws. Starts far
+  // in the past, so everything waits in its resting pose.
+  const throwStart = useRef(-Infinity);
+  const flights = useRef<(PinFlight | null)[]>([]);
+  const previousKey = useRef(shotKey);
+  const invalidate = useThree((state) => state.invalidate);
+
+  const startThrow = useEffectEvent(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    flights.current = launchPins(pinsDown);
+    throwStart.current = performance.now() / 1000;
+    invalidate();
+  });
+
+  useEffect(() => {
+    if (shotKey === previousKey.current) return;
+    previousKey.current = shotKey;
+    startThrow();
+  }, [shotKey]);
+
+  return (
+    <>
+      <Pins throwStart={throwStart} flights={flights} />
+      <Bowler throwStart={throwStart} />
+    </>
+  );
 }
 
 function Limb({
@@ -246,23 +369,7 @@ function Limb({
   );
 }
 
-// Plays one throw each time shotKey changes, skipping the first render
-function Bowler({ shotKey }: { shotKey: number | null }) {
-  // Seconds from the browser's clock, not three's: three's clock only
-  // advances when a frame draws, and frames stop between throws. Starts far
-  // in the past, so the bowler waits in the finished pose.
-  const throwStart = useRef(-Infinity);
-  const previousKey = useRef(shotKey);
-  const invalidate = useThree((state) => state.invalidate);
-
-  useEffect(() => {
-    if (shotKey === previousKey.current) return;
-    previousKey.current = shotKey;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    throwStart.current = performance.now() / 1000;
-    invalidate();
-  }, [shotKey, invalidate]);
-
+function Bowler({ throwStart }: { throwStart: React.RefObject<number> }) {
   const bowler = useRef<THREE.Group>(null);
   const upperBody = useRef<THREE.Group>(null);
   const rightArm = useRef<THREE.Group>(null);
@@ -401,9 +508,11 @@ function SceneCamera({ view }: { view: SceneView }) {
 
 export default function BowlingScene({
   shotKey,
+  pinsDown,
   view,
 }: {
   shotKey: number | null;
+  pinsDown: number;
   view: SceneView;
 }) {
   return (
@@ -427,8 +536,7 @@ export default function BowlingScene({
       />
       <SceneCamera view={view} />
       <Lane />
-      <Pins />
-      <Bowler shotKey={shotKey} />
+      <Throw shotKey={shotKey} pinsDown={pinsDown} />
     </Canvas>
   );
 }

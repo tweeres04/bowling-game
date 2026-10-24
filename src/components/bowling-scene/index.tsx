@@ -11,9 +11,11 @@ const BowlingScene = dynamic(() => import("./scene"), { ssr: false });
 // every shot. Dimmed so the UI on top stays readable.
 export function BowlingSceneBackground({
   shotKey,
+  pinsDown,
   view,
 }: {
   shotKey: number | null;
+  pinsDown: number;
   view: SceneView;
 }) {
   return (
@@ -21,7 +23,7 @@ export function BowlingSceneBackground({
       className="pointer-events-none fixed inset-0 -z-10 opacity-40"
       aria-hidden
     >
-      <BowlingScene shotKey={shotKey} view={view} />
+      <BowlingScene shotKey={shotKey} pinsDown={pinsDown} view={view} />
     </div>
   );
 }

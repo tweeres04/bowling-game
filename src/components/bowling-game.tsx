@@ -41,6 +41,7 @@ export async function BowlingGame() {
       {showScene && (
         <BowlingSceneBackground
           shotKey={player.lastShotAt?.getTime() ?? null}
+          pinsDown={player.rolls.at(-1) ?? 0}
           view={sceneView}
         />
       )}
