@@ -18,7 +18,7 @@ export function GameStats({
 }) {
   return (
     <section className="w-full max-w-sm">
-      <h2 className="mb-3 text-sm font-semibold">Your games</h2>
+      <h2 className="mb-3 text-sm font-semibold">Games</h2>
       <form action={setStatsWindow} className="mb-4 flex gap-2">
         {STATS_WINDOWS.map((option) => (
           <Button

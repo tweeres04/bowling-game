@@ -13,7 +13,7 @@ import {
 export function SkillLevels({ xp, focus }: { xp: Xp; focus: Focus }) {
   return (
     <div className="w-full max-w-sm">
-      <h2 className="mb-3 text-sm font-semibold">Your skill</h2>
+      <h2 className="mb-3 text-sm font-semibold">Skill</h2>
       <ul className="space-y-4 text-sm">
         {SKILL_AREAS.map((area) => {
           const level = levelFromXp(xp[area]);
