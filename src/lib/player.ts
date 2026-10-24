@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { players } from '@/db/schema'
+import { setPlayerProfileOnce, trackEvent } from '@/lib/analytics'
 
 const PLAYER_COOKIE = 'playerId'
 
@@ -31,14 +32,22 @@ export async function getPlayerForDisplay() {
 }
 
 // Server actions only, since setting the cookie isn't allowed during render
+// A visitor gets a player row on their first visit, when the away check
+// runs on page load
+async function createPlayer() {
+	const [player] = await db.insert(players).values({}).returning()
+	trackEvent(player.id, 'player_created', { platform: 'web' })
+	setPlayerProfileOnce(player.id, { $created: player.createdAt.toISOString() })
+	return player
+}
+
 export async function getOrCreatePlayer() {
 	const cookieStore = await cookies()
 	const playerId = cookieStore.get(PLAYER_COOKIE)?.value
 	const existing = playerId
 		? await db.query.players.findFirst({ where: eq(players.id, playerId) })
 		: undefined
-	const player =
-		existing ?? (await db.insert(players).values({}).returning())[0]
+	const player = existing ?? (await createPlayer())
 
 	cookieStore.set(PLAYER_COOKIE, player.id, {
 		maxAge: COOKIE_MAX_AGE,

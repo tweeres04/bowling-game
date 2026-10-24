@@ -26,7 +26,8 @@ import {
 	SHOW_SCENE_COOKIE,
 } from '@/lib/settings'
 import { SCENE_VIEWS, type SceneView } from '@/lib/scene-view'
-import { AWAY_SHOT_INTERVAL_MS } from '@/lib/progression'
+import { setPlayerProfile, trackEvent } from '@/lib/analytics'
+import { AWAY_SHOT_INTERVAL_MS, levelFromXp } from '@/lib/progression'
 
 function playStateOf(player: Player): PlayState {
 	return { rolls: player.rolls, xp: xpOf(player), focus: player.focus }
@@ -82,9 +83,29 @@ export async function collectAwayProgress() {
 		new Date(),
 	)
 	refresh()
-	return finishedGames.length > 0
-		? summarizeAway(finishedGames, xpOf(before), xpOf(player), awayTime)
-		: null
+	// Short gaps, like the check every away interval while the page is open,
+	// don't finish a game and don't count as coming back
+	if (finishedGames.length === 0) return null
+
+	const xp = xpOf(player)
+	const summary = summarizeAway(finishedGames, xpOf(before), xp, awayTime)
+	trackEvent(player.id, 'away_progress_collected', {
+		away_minutes: Math.round(summary.awayMs / 60_000),
+		is_capped: summary.capped,
+		games_completed: summary.games,
+		average_score: summary.averageScore,
+		first_ball_xp_gained: summary.xpGained.firstBall,
+		spares_xp_gained: summary.xpGained.spares,
+		first_ball_level: levelFromXp(xp.firstBall),
+		spares_level: levelFromXp(xp.spares),
+		focus: player.focus,
+	})
+	setPlayerProfile(player.id, {
+		first_ball_level: levelFromXp(xp.firstBall),
+		spares_level: levelFromXp(xp.spares),
+		focus: player.focus,
+	})
+	return summary
 }
 
 export async function shoot() {
@@ -123,6 +144,7 @@ export async function setFocus(formData: FormData) {
 	}
 	const player = await getOrCreatePlayer()
 	await db.update(players).set({ focus }).where(eq(players.id, player.id))
+	setPlayerProfile(player.id, { focus })
 	refresh()
 }
 

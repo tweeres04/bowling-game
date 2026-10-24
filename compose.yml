@@ -7,6 +7,7 @@ services:
       - ./database:/app/database
     environment:
       DATABASE_URL: file:./database/bowling-game.db
+      MIXPANEL_TOKEN: dfb35a193d912ca49e27b46ca25e9aed
 
 networks:
   default:
