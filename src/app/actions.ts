@@ -27,6 +27,7 @@ import {
 } from '@/lib/settings'
 import { SCENE_VIEWS, type SceneView } from '@/lib/scene-view'
 import { setPlayerProfile, trackEvent } from '@/lib/analytics'
+import { summarizeGames } from '@/lib/stats'
 import { AWAY_SHOT_INTERVAL_MS, levelFromXp } from '@/lib/progression'
 
 function playStateOf(player: Player): PlayState {
@@ -108,7 +109,11 @@ export async function collectAwayProgress() {
 	return summary
 }
 
-export async function shoot() {
+// Who bowled the shot that finished a game you were there for. Games bowled
+// while away are counted in away_progress_collected instead.
+type FinishedBy = 'manual' | 'auto'
+
+async function bowl(finishedBy: FinishedBy) {
 	const now = new Date()
 	const { player } = await catchUpAwayShots(await getOrCreatePlayer(), now)
 	// Shots queued from fast clicking can land after the game ends
@@ -119,8 +124,24 @@ export async function shoot() {
 			playerFields(state, now),
 			finishedGame ? [finishedGame] : [],
 		)
+		if (finishedGame) {
+			const stats = summarizeGames([finishedGame])
+			trackEvent(player.id, 'game_completed', {
+				score: finishedGame.score,
+				strikes: stats.strikesPerGame,
+				spares: stats.sparesPerGame,
+				finished_by: finishedBy,
+				first_ball_level: levelFromXp(state.xp.firstBall),
+				spares_level: levelFromXp(state.xp.spares),
+				focus: state.focus,
+			})
+		}
 	}
 	refresh()
+}
+
+export async function shoot() {
+	await bowl('manual')
 }
 
 // One tick of auto mode. A finished game stays on the scorecard for a tick
@@ -128,7 +149,7 @@ export async function shoot() {
 export async function autoBowl() {
 	const player = await getOrCreatePlayer()
 	if (isGameOver(player.rolls)) return newGame()
-	return shoot()
+	return bowl('auto')
 }
 
 export async function newGame() {
@@ -144,6 +165,10 @@ export async function setFocus(formData: FormData) {
 	}
 	const player = await getOrCreatePlayer()
 	await db.update(players).set({ focus }).where(eq(players.id, player.id))
+	trackEvent(player.id, 'focus_changed', {
+		focus,
+		previous_focus: player.focus,
+	})
 	setPlayerProfile(player.id, { focus })
 	refresh()
 }
@@ -157,6 +182,8 @@ export async function setAutoMode(on: boolean) {
 		maxAge: COOKIE_MAX_AGE,
 		sameSite: 'lax',
 	})
+	const player = await getOrCreatePlayer()
+	trackEvent(player.id, 'auto_mode_toggled', { is_on: on })
 }
 
 export async function setShowScene(show: boolean) {
