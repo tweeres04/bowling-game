@@ -19,7 +19,9 @@ export function ShotOdds({
 				Odds for your next shot ({pinsStanding}{' '}
 				{pinsStanding === 1 ? 'pin' : 'pins'} standing)
 			</h2>
-			<ul className="space-y-1.5">
+			{/* Always 11 rows tall, the most a full rack needs, so the page
+			    doesn't jump as pins fall */}
+			<ul className="grid grid-rows-11 gap-1.5">
 				{rows.map(({ pins, chance }) => (
 					<li
 						key={pins}
