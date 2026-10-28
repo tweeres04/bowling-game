@@ -1,38 +1,73 @@
 import { CaretRightIcon } from '@phosphor-icons/react/ssr'
 import { cn } from 'cn'
+import { setStatsGames } from '@/app/actions'
 import { ScoreChart } from '@/components/score-chart'
 import { Scorecard } from '@/components/scorecard'
 import { StatGrid, StatTile } from '@/components/stat-grid'
-import { buttonVariants } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { formatNumber } from '@/lib/format'
 import type { RecentGame } from '@/lib/game-history'
-import { STATS_GAMES, summarizeGames } from '@/lib/stats'
+import {
+	SCORECARD_GAMES,
+	STATS_GAME_COUNTS,
+	TREND_GAMES,
+	summarizeGames,
+	type StatsGameCount,
+} from '@/lib/stats'
 
 export function GameStats({
 	games,
+	count,
 }: {
 	// Newest first
 	games: RecentGame[]
+	count: StatsGameCount
 }) {
 	return (
 		<section className="w-full max-w-sm">
-			<h2 className="mb-3 text-sm font-semibold">Last {STATS_GAMES} games</h2>
+			<div className="mb-3 flex items-center justify-between">
+				<h2 className="text-sm font-semibold">Last {count} games</h2>
+				<div className="flex gap-1">
+					{STATS_GAME_COUNTS.map((option) => (
+						<form key={option} action={setStatsGames.bind(null, option)}>
+							<Button
+								type="submit"
+								size="sm"
+								variant={option === count ? 'secondary' : 'ghost'}
+								aria-pressed={option === count}
+							>
+								{option}
+							</Button>
+						</form>
+					))}
+				</div>
+			</div>
 			{games.length === 0 ? (
 				<p className="text-sm text-muted-foreground">
 					Finish a game and your stats will show up here.
 				</p>
 			) : (
-				<RecentGames games={games} />
+				<RecentGames games={games} count={count} />
 			)}
 		</section>
 	)
 }
 
-function RecentGames({ games }: { games: RecentGame[] }) {
+function RecentGames({
+	games,
+	count,
+}: {
+	games: RecentGame[]
+	count: StatsGameCount
+}) {
 	const stats = summarizeGames(games)
 	return (
 		<div className="space-y-6">
-			<ScoreChart games={games} average={stats.average} />
+			<ScoreChart
+				games={games}
+				average={stats.average}
+				trendGames={TREND_GAMES[count]}
+			/>
 			<StatGrid columns={3}>
 				<StatTile label="Average" value={stats.average} />
 				<StatTile label="Best" value={stats.best} />
@@ -79,7 +114,7 @@ function RecentGames({ games }: { games: RecentGame[] }) {
 					<span className="hidden group-open:inline">Hide scorecards</span>
 				</summary>
 				<ol className="mt-4 space-y-6">
-					{games.map((game) => (
+					{games.slice(0, SCORECARD_GAMES).map((game) => (
 						<li key={game.id}>
 							<h3 className="mb-2 text-sm font-semibold">
 								Game {formatNumber(game.number)}

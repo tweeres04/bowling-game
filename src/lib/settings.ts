@@ -2,11 +2,13 @@ import 'server-only'
 import { cookies } from 'next/headers'
 
 import { SCENE_VIEWS, type SceneView } from '@/lib/scene-view'
+import { STATS_GAME_COUNTS, type StatsGameCount } from '@/lib/stats'
 
 export const SHOW_SCENE_COOKIE = 'showScene'
 export const SCENE_VIEW_COOKIE = 'sceneView'
 export const AUTO_MODE_COOKIE = 'autoMode'
 export const SHOW_ODDS_COOKIE = 'showOdds'
+export const STATS_GAMES_COOKIE = 'statsGames'
 
 // The 3D bowler is off unless the player turns it on
 export async function getShowScene() {
@@ -26,4 +28,10 @@ export async function getAutoMode() {
 // The odds show under the Shoot button unless the player hides them
 export async function getShowOdds() {
 	return (await cookies()).get(SHOW_ODDS_COOKIE)?.value !== 'false'
+}
+
+// Stats cover the last 20 games unless the player picks more
+export async function getStatsGames(): Promise<StatsGameCount> {
+	const saved = Number((await cookies()).get(STATS_GAMES_COOKIE)?.value)
+	return STATS_GAME_COUNTS.find((count) => count === saved) ?? 20
 }

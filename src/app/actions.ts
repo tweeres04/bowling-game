@@ -26,10 +26,15 @@ import {
 	SCENE_VIEW_COOKIE,
 	SHOW_ODDS_COOKIE,
 	SHOW_SCENE_COOKIE,
+	STATS_GAMES_COOKIE,
 } from '@/lib/settings'
 import { SCENE_VIEWS, type SceneView } from '@/lib/scene-view'
 import { setPlayerProfile, trackEvent } from '@/lib/analytics'
-import { summarizeGames } from '@/lib/stats'
+import {
+	STATS_GAME_COUNTS,
+	summarizeGames,
+	type StatsGameCount,
+} from '@/lib/stats'
 import { AWAY_SHOT_INTERVAL_MS, levelFromXp } from '@/lib/progression'
 
 function playStateOf(player: Player): PlayState {
@@ -204,6 +209,17 @@ export async function setShowOdds(show: boolean) {
 	if (typeof show !== 'boolean') throw new Error(`Unknown setting: ${show}`)
 	const cookieStore = await cookies()
 	cookieStore.set(SHOW_ODDS_COOKIE, String(show), {
+		maxAge: COOKIE_MAX_AGE,
+		sameSite: 'lax',
+	})
+	refresh()
+}
+
+export async function setStatsGames(count: StatsGameCount) {
+	if (!STATS_GAME_COUNTS.includes(count))
+		throw new Error(`Unknown game count: ${count}`)
+	const cookieStore = await cookies()
+	cookieStore.set(STATS_GAMES_COOKIE, String(count), {
 		maxAge: COOKIE_MAX_AGE,
 		sameSite: 'lax',
 	})

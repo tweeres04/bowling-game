@@ -1,14 +1,12 @@
+import { cn } from 'cn'
 import { formatNumber } from '@/lib/format'
 import type { RecentGame } from '@/lib/game-history'
 
-// How many games each point of the trend line averages over
-const TREND_GAMES = 5
-
 // Each point averages that game with the ones just before it. The first few
 // games have fewer before them, so they average what's there.
-function movingAverages(scores: number[]) {
+function movingAverages(scores: number[], trendGames: number) {
 	return scores.map((_, index) => {
-		const window = scores.slice(Math.max(0, index - TREND_GAMES + 1), index + 1)
+		const window = scores.slice(Math.max(0, index - trendGames + 1), index + 1)
 		return window.reduce((total, score) => total + score, 0) / window.length
 	})
 }
@@ -19,23 +17,35 @@ function movingAverages(scores: number[]) {
 export function ScoreChart({
 	games,
 	average,
+	trendGames,
 }: {
 	// Newest first
 	games: RecentGame[]
 	average: number
+	// How many games each point of the trend line averages over
+	trendGames: number
 }) {
 	const oldestFirst = games.toReversed()
 	const best = Math.max(...games.map((game) => game.score))
 	const heightOf = (score: number) => `${(score / best) * 100}%`
 	// In viewBox units: one unit per game across, one per pin of score up
-	const trendPoints = movingAverages(oldestFirst.map((game) => game.score))
+	const trendPoints = movingAverages(
+		oldestFirst.map((game) => game.score),
+		trendGames,
+	)
 		.map((score, index) => `${index + 0.5},${best - score}`)
 		.join(' ')
 
 	return (
 		<figure>
 			<div className="relative h-28 border-b">
-				<ol className="flex h-full items-end gap-0.5">
+				{/* 100 bars with 2px gaps would be mostly gap */}
+				<ol
+					className={cn(
+						'flex h-full items-end',
+						games.length > 50 ? 'gap-px' : 'gap-0.5',
+					)}
+				>
 					{oldestFirst.map((game) => {
 						const label = `Game ${formatNumber(game.number)}: ${game.score}`
 						return (
@@ -79,7 +89,7 @@ export function ScoreChart({
 				</span>
 				<span className="flex items-center gap-2">
 					<span className="w-4 border-t-2 border-foreground" />
-					{TREND_GAMES}-game average
+					{trendGames}-game average
 				</span>
 			</figcaption>
 		</figure>

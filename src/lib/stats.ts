@@ -1,7 +1,16 @@
 import { buildFrames } from '@/lib/bowling'
 
-// How many recent games the stats section covers
-export const STATS_GAMES = 20
+// How many recent games the stats section can cover; the player picks one
+export const STATS_GAME_COUNTS = [20, 100] as const
+export type StatsGameCount = (typeof STATS_GAME_COUNTS)[number]
+
+// How many games each point of the chart's trend line averages over. Wider
+// for more games so the line shows the trend, not every hot streak.
+export const TREND_GAMES: Record<StatsGameCount, number> = { 20: 5, 100: 10 }
+
+// The scorecard list stays this long either way, so 100 doesn't make a
+// page of scorecards
+export const SCORECARD_GAMES = 20
 
 type GameCounts = {
 	strikes: number

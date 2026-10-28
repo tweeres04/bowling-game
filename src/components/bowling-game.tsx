@@ -25,22 +25,24 @@ import {
 	getSceneView,
 	getShowOdds,
 	getShowScene,
+	getStatsGames,
 } from '@/lib/settings'
 import { skillForShot } from '@/lib/progression'
-import { STATS_GAMES } from '@/lib/stats'
 
 export async function BowlingGame() {
-	const [player, showScene, sceneView, autoMode, showOdds] = await Promise.all([
-		getPlayerForDisplay(),
-		getShowScene(),
-		getSceneView(),
-		getAutoMode(),
-		getShowOdds(),
-	])
+	const [player, showScene, sceneView, autoMode, showOdds, statsGames] =
+		await Promise.all([
+			getPlayerForDisplay(),
+			getShowScene(),
+			getSceneView(),
+			getAutoMode(),
+			getShowOdds(),
+			getStatsGames(),
+		])
 	// A visitor who hasn't bowled yet has no player row, so no games
 	const { games: recentGames, totalGames } =
 		'id' in player
-			? await getRecentGames(player.id, STATS_GAMES)
+			? await getRecentGames(player.id, statsGames)
 			: { games: [], totalGames: 0 }
 	const xp = xpOf(player)
 	const gameOver = isGameOver(player.rolls)
@@ -113,7 +115,7 @@ export async function BowlingGame() {
 			</div>
 
 			<SkillLevels xp={xp} focus={player.focus} />
-			<GameStats games={recentGames} />
+			<GameStats games={recentGames} count={statsGames} />
 			<AwaySummary isLoggedIn={player.email !== null} />
 		</div>
 	)
