@@ -37,8 +37,8 @@ export default function PrivacyPage() {
 					people play, like when games finish and which focus you pick. This
 					includes your browser and device type, your rough location based on
 					your IP address, and recordings of how you use the site, like what you
-					tap and how the page looked. Recordings never include your email
-					address or password.
+					tap and how the page looked. Recordings never include your password,
+					but can show your email address if it&apos;s on screen.
 				</li>
 			</ul>
 
@@ -53,7 +53,8 @@ export default function PrivacyPage() {
 			<ul>
 				<li>
 					<strong>Mixpanel</strong> stores the usage information and recordings
-					described above, in the United States.
+					described above, and your email address if you make an account, in the
+					United States.
 				</li>
 				<li>
 					<strong>Google</strong> knows you signed in to Idle bowling, if you
