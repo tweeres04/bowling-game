@@ -43,3 +43,6 @@ next-env.d.ts
 # sqlite
 local.db*
 /database
+
+# production database snapshots
+/backups
