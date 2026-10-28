@@ -17,6 +17,7 @@ import {
 import {
 	COOKIE_MAX_AGE,
 	getOrCreatePlayer,
+	getPlayer,
 	xpOf,
 	type Player,
 } from '@/lib/player'
@@ -78,7 +79,9 @@ async function catchUpAwayShots(player: Player, now: Date) {
 
 // Called when the page opens or becomes visible again
 export async function collectAwayProgress() {
-	const before = await getOrCreatePlayer()
+	const before = await getPlayer()
+	// Someone who hasn't played yet has nothing to collect
+	if (!before) return null
 	const { player, finishedGames, awayTime } = await catchUpAwayShots(
 		before,
 		new Date(),

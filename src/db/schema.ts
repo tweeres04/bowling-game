@@ -4,6 +4,11 @@ export const players = sqliteTable('players', {
 	id: text()
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
+	// An account is optional. Making one adds these to your current player.
+	// Stored lowercase so logins aren't case sensitive.
+	email: text().unique(),
+	// Null for accounts made with Google
+	passwordHash: text(),
 	firstBallXp: integer().notNull().default(0),
 	sparesXp: integer().notNull().default(0),
 	focus: text({ enum: ['balanced', 'firstBall', 'spares'] })
@@ -39,3 +44,15 @@ export const games = sqliteTable(
 	// away bowling add hundreds of games a day
 	(table) => [index('games_player_recent').on(table.playerId, table.id)],
 )
+
+// One per browser, for anonymous and logged in players alike. The session
+// cookie holds the token.
+export const sessions = sqliteTable('sessions', {
+	token: text().primaryKey(),
+	playerId: text()
+		.notNull()
+		.references(() => players.id),
+	createdAt: integer({ mode: 'timestamp' })
+		.notNull()
+		.$defaultFn(() => new Date()),
+})

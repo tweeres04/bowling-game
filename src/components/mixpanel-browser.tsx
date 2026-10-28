@@ -10,7 +10,7 @@ export function MixpanelBrowser({
 	playerId,
 }: {
 	token: string
-	// A first time visitor has no player until the away check creates one
+	// A first time visitor has no player until their first action creates one
 	playerId: string | null
 }) {
 	useEffect(() => {
@@ -30,6 +30,10 @@ export function MixpanelBrowser({
 
 	useEffect(() => {
 		if (!playerId) return
+		// Logging in or out switches players, and the last one's identity
+		// shouldn't carry over to the next
+		const identified = mixpanel.get_property('$user_id')
+		if (identified && identified !== playerId) mixpanel.reset()
 		// Links this browser, and its recordings, to the server's events
 		mixpanel.identify(playerId)
 		// Also adds the browser and operating system to the profile

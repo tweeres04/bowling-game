@@ -87,12 +87,16 @@ export async function BowlingGame() {
 					pinsStanding={pinsStanding}
 					skill={skillForShot(xp, player.focus, pinsStanding)}
 				/>
-				<SettingsDialog showScene={showScene} sceneView={sceneView} />
+				<SettingsDialog
+					showScene={showScene}
+					sceneView={sceneView}
+					accountEmail={player.email}
+				/>
 			</div>
 
 			<SkillLevels xp={xp} focus={player.focus} />
 			<GameStats games={recentGames} />
-			<AwaySummary />
+			<AwaySummary isLoggedIn={player.email !== null} />
 		</div>
 	)
 }

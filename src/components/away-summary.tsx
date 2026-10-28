@@ -1,7 +1,9 @@
 'use client'
 
 import { startTransition, useEffect, useEffectEvent, useState } from 'react'
+import { CheckIcon, CloudArrowUpIcon } from '@phosphor-icons/react'
 import { collectAwayProgress } from '@/app/actions'
+import { AccountForm } from '@/components/account-form'
 import { Button } from '@/components/ui/button'
 import {
 	Dialog,
@@ -24,8 +26,9 @@ import {
 // Collects away progress when the page opens, when you come back to it, and
 // every away interval while you're on it with auto mode off. Shows what you
 // bowled if a game finished.
-export function AwaySummary() {
+export function AwaySummary({ isLoggedIn }: { isLoggedIn: boolean }) {
 	const [summary, setSummary] = useState<Summary | null>(null)
+	const [isSavingProgress, setIsSavingProgress] = useState(false)
 
 	const collect = useEffectEvent(() => {
 		startTransition(async () => {
@@ -57,46 +60,78 @@ export function AwaySummary() {
 			onOpenChange={(open) => {
 				if (!open) setSummary(null)
 			}}
+			onOpenChangeComplete={(open) => {
+				if (!open) setIsSavingProgress(false)
+			}}
 		>
 			{summary && (
 				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Welcome back!</DialogTitle>
-						<DialogDescription>
-							You kept bowling while you were away.
-						</DialogDescription>
-					</DialogHeader>
-					<StatGrid>
-						<StatTile
-							label="Time away"
-							value={formatDuration(summary.awayMs)}
-						/>
-						<StatTile
-							label="Rewarded time"
-							value={formatDuration(summary.rewardedMs)}
-						/>
-						<StatTile
-							label="Games bowled"
-							value={formatNumber(summary.games)}
-						/>
-						<StatTile label="Average score" value={summary.averageScore} />
-					</StatGrid>
-					{summary.capped && (
-						<p>
-							Away bowling maxes out at 4 hours, so check back before then to
-							keep it going.
-						</p>
+					{isSavingProgress ? (
+						<AccountForm onBack={() => setIsSavingProgress(false)} />
+					) : (
+						<>
+							<DialogHeader>
+								<DialogTitle>Welcome back!</DialogTitle>
+								<DialogDescription>
+									You kept bowling while you were away.
+								</DialogDescription>
+							</DialogHeader>
+							<StatGrid>
+								<StatTile
+									label="Time away"
+									value={formatDuration(summary.awayMs)}
+								/>
+								<StatTile
+									label="Rewarded time"
+									value={formatDuration(summary.rewardedMs)}
+								/>
+								<StatTile
+									label="Games bowled"
+									value={formatNumber(summary.games)}
+								/>
+								<StatTile label="Average score" value={summary.averageScore} />
+							</StatGrid>
+							{summary.capped && (
+								<p>
+									Away bowling maxes out at 4 hours, so check back before then
+									to keep it going.
+								</p>
+							)}
+							<RewardList>
+								{SKILL_AREAS.map((area) => (
+									<RewardRow
+										key={area}
+										label={FOCUS_LABELS[area]}
+										amount={`+${formatNumber(summary.xpGained[area])} XP`}
+									/>
+								))}
+							</RewardList>
+							{isLoggedIn ? (
+								<DialogClose render={<Button size="lg" />}>
+									<CheckIcon data-icon="inline-start" weight="bold" />
+									Collect
+								</DialogClose>
+							) : (
+								<>
+									<p>
+										Your progress is only saved in this browser, so clearing
+										your browser data would erase it. Make an account to keep it
+										safe and bowl on any device.
+									</p>
+									<Button size="lg" onClick={() => setIsSavingProgress(true)}>
+										<CloudArrowUpIcon data-icon="inline-start" weight="bold" />
+										Save your progress
+									</Button>
+									<DialogClose
+										render={<Button variant="secondary" size="lg" />}
+									>
+										<CheckIcon data-icon="inline-start" weight="bold" />
+										Collect
+									</DialogClose>
+								</>
+							)}
+						</>
 					)}
-					<RewardList>
-						{SKILL_AREAS.map((area) => (
-							<RewardRow
-								key={area}
-								label={FOCUS_LABELS[area]}
-								amount={`+${formatNumber(summary.xpGained[area])} XP`}
-							/>
-						))}
-					</RewardList>
-					<DialogClose render={<Button size="lg" />}>Collect</DialogClose>
 				</DialogContent>
 			)}
 		</Dialog>
