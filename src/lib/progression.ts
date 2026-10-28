@@ -23,7 +23,7 @@ export const MAX_LEVEL = 99
 // How often auto mode bowls a shot
 export const AUTO_SHOT_INTERVAL_MS = 4000
 
-// The Shoot button rests this long after each click, so manual shooting
+// Shoot waits this long between shots, tapped or held, so manual shooting
 // tops out at 4 shots a second
 export const MANUAL_SHOT_COOLDOWN_MS = 250
 
