@@ -23,9 +23,12 @@ export const MAX_LEVEL = 99
 // How often auto mode bowls a shot
 export const AUTO_SHOT_INTERVAL_MS = 4000
 
-// Shoot waits this long between shots, tapped or held, so manual shooting
-// tops out at 4 shots a second
+// Shoot waits this long after a tap, so tapping tops out at 4 shots a second
 export const MANUAL_SHOT_COOLDOWN_MS = 250
+
+// Holding Shoot fires this often, 3 shots a second. Slower than the tap cap
+// because fast tapping lands about 3 a second, and holding shouldn't beat it.
+export const HELD_SHOT_INTERVAL_MS = 333
 
 // While you're away (tab closed, hidden, or auto mode off) you still bowl,
 // 10x slower than auto mode, for up to 4 hours

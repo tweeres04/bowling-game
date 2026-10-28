@@ -4,16 +4,21 @@ import { startTransition, useRef, useState } from 'react'
 import { BowlingBallIcon } from '@phosphor-icons/react'
 import { shoot } from '@/app/actions'
 import { Button } from '@/components/ui/button'
-import { MANUAL_SHOT_COOLDOWN_MS } from '@/lib/progression'
+import {
+	HELD_SHOT_INTERVAL_MS,
+	MANUAL_SHOT_COOLDOWN_MS,
+} from '@/lib/progression'
 
 // Shoots on press and keeps shooting while held. The form action still works
 // without JavaScript.
 export function ShootButton() {
 	const [coolingDown, setCoolingDown] = useState(false)
+	// Held shots are further apart than the tap cooldown, so the button stays
+	// disabled for the whole hold instead of flickering between shots
+	const [holding, setHolding] = useState(false)
 	const cooldownTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-	// Each shot restarts the cooldown, so the button stays disabled the whole
-	// time it's held instead of flickering between shots
+	// Each shot restarts the cooldown
 	function shootAndCoolDown() {
 		clearTimeout(cooldownTimer.current)
 		setCoolingDown(true)
@@ -30,10 +35,12 @@ export function ShootButton() {
 	function shootWhileHeld(event: React.PointerEvent) {
 		// Only the main button, so right-clicking doesn't shoot
 		if (event.button !== 0) return
+		setHolding(true)
 		shootAndCoolDown()
-		const timer = setInterval(shootAndCoolDown, MANUAL_SHOT_COOLDOWN_MS)
+		const timer = setInterval(shootAndCoolDown, HELD_SHOT_INTERVAL_MS)
 		const listeners = new AbortController()
 		function stopHolding() {
+			setHolding(false)
 			clearInterval(timer)
 			listeners.abort()
 		}
@@ -55,7 +62,7 @@ export function ShootButton() {
 				type="submit"
 				size="lg"
 				className="w-full"
-				disabled={coolingDown}
+				disabled={coolingDown || holding}
 				focusableWhenDisabled
 				onPointerDown={shootWhileHeld}
 				// Pointer presses already shot on the way down, so only keyboard
