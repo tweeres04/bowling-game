@@ -1,5 +1,8 @@
-import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react/ssr'
-import { newGame } from '@/app/actions'
+import {
+	ArrowCounterClockwiseIcon,
+	ChartBarHorizontalIcon,
+} from '@phosphor-icons/react/ssr'
+import { newGame, setShowOdds } from '@/app/actions'
 import { AwaySummary } from '@/components/away-summary'
 import { BowlingSceneBackground } from '@/components/bowling-scene'
 import { FocusPicker } from '@/components/focus-picker'
@@ -17,16 +20,22 @@ import { mixpanelToken } from '@/lib/analytics'
 import { formatNumber } from '@/lib/format'
 import { getRecentGames } from '@/lib/game-history'
 import { getPlayerForDisplay, xpOf } from '@/lib/player'
-import { getAutoMode, getSceneView, getShowScene } from '@/lib/settings'
+import {
+	getAutoMode,
+	getSceneView,
+	getShowOdds,
+	getShowScene,
+} from '@/lib/settings'
 import { skillForShot } from '@/lib/progression'
 import { STATS_GAMES } from '@/lib/stats'
 
 export async function BowlingGame() {
-	const [player, showScene, sceneView, autoMode] = await Promise.all([
+	const [player, showScene, sceneView, autoMode, showOdds] = await Promise.all([
 		getPlayerForDisplay(),
 		getShowScene(),
 		getSceneView(),
 		getAutoMode(),
+		getShowOdds(),
 	])
 	// A visitor who hasn't bowled yet has no player row, so no games
 	const { games: recentGames, totalGames } =
@@ -81,12 +90,21 @@ export async function BowlingGame() {
 				)}
 			</ShotControls>
 
-			<div className="flex gap-2">
-				<FocusPicker focus={player.focus} />
+			{showOdds && (
 				<ShotOdds
 					pinsStanding={pinsStanding}
 					skill={skillForShot(xp, player.focus, pinsStanding)}
 				/>
+			)}
+
+			<div className="flex gap-2">
+				<FocusPicker focus={player.focus} />
+				<form action={setShowOdds.bind(null, !showOdds)}>
+					<Button type="submit" variant="secondary" aria-pressed={showOdds}>
+						<ChartBarHorizontalIcon data-icon="inline-start" weight="bold" />
+						Odds
+					</Button>
+				</form>
 				<SettingsDialog
 					showScene={showScene}
 					sceneView={sceneView}

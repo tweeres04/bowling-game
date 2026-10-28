@@ -1,4 +1,3 @@
-import { OddsDialog } from '@/components/odds-dialog'
 import { shotOdds } from '@/lib/bowling'
 
 export function ShotOdds({
@@ -15,9 +14,11 @@ export function ShotOdds({
 	const rows = odds.map((chance, pins) => ({ pins, chance })).reverse()
 
 	return (
-		<OddsDialog
-			description={`${pinsStanding} ${pinsStanding === 1 ? 'pin' : 'pins'} standing`}
-		>
+		<div className="w-full">
+			<h2 className="mb-2 text-sm font-semibold">
+				Odds for your next shot ({pinsStanding}{' '}
+				{pinsStanding === 1 ? 'pin' : 'pins'} standing)
+			</h2>
 			<ul className="space-y-1.5">
 				{rows.map(({ pins, chance }) => (
 					<li
@@ -41,6 +42,6 @@ export function ShotOdds({
 					</li>
 				))}
 			</ul>
-		</OddsDialog>
+		</div>
 	)
 }

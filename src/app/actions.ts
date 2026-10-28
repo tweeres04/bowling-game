@@ -24,6 +24,7 @@ import {
 import {
 	AUTO_MODE_COOKIE,
 	SCENE_VIEW_COOKIE,
+	SHOW_ODDS_COOKIE,
 	SHOW_SCENE_COOKIE,
 } from '@/lib/settings'
 import { SCENE_VIEWS, type SceneView } from '@/lib/scene-view'
@@ -193,6 +194,16 @@ export async function setShowScene(show: boolean) {
 	if (typeof show !== 'boolean') throw new Error(`Unknown setting: ${show}`)
 	const cookieStore = await cookies()
 	cookieStore.set(SHOW_SCENE_COOKIE, String(show), {
+		maxAge: COOKIE_MAX_AGE,
+		sameSite: 'lax',
+	})
+	refresh()
+}
+
+export async function setShowOdds(show: boolean) {
+	if (typeof show !== 'boolean') throw new Error(`Unknown setting: ${show}`)
+	const cookieStore = await cookies()
+	cookieStore.set(SHOW_ODDS_COOKIE, String(show), {
 		maxAge: COOKIE_MAX_AGE,
 		sameSite: 'lax',
 	})
