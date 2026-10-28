@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { Suspense } from 'react'
 import { BowlingGame, BowlingGameSkeleton } from '@/components/bowling-game'
 
@@ -24,6 +25,14 @@ export default function Home() {
 				<a href="https://tweeres.ca" className="text-foreground underline">
 					Tyler Weeres
 				</a>
+				{' · '}
+				<Link href="/privacy" className="text-foreground underline">
+					Privacy
+				</Link>
+				{' · '}
+				<Link href="/terms" className="text-foreground underline">
+					Terms
+				</Link>
 			</footer>
 		</main>
 	)

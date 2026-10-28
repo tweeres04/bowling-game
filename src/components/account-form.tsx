@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useId, useState } from 'react'
+import { CloudArrowUpIcon, SignInIcon } from '@phosphor-icons/react'
 import { logIn, signUp } from '@/app/account-actions'
 import { GoogleIcon } from '@/components/google-icon'
 import { Button } from '@/components/ui/button'
@@ -98,9 +99,40 @@ export function AccountForm({
 					</p>
 				)}
 				<Button type="submit" size="lg" disabled={isPending}>
-					{mode === 'signUp' ? 'Create account' : 'Log in'}
+					{mode === 'signUp' ? (
+						<>
+							<CloudArrowUpIcon data-icon="inline-start" weight="bold" />
+							Create account
+						</>
+					) : (
+						<>
+							<SignInIcon data-icon="inline-start" weight="bold" />
+							Log in
+						</>
+					)}
 				</Button>
 			</form>
+			{mode === 'signUp' && (
+				<p className="text-center text-sm text-muted-foreground">
+					By making an account, you agree to the{' '}
+					<a
+						href="/terms"
+						target="_blank"
+						className="text-foreground underline"
+					>
+						terms
+					</a>{' '}
+					and{' '}
+					<a
+						href="/privacy"
+						target="_blank"
+						className="text-foreground underline"
+					>
+						privacy policy
+					</a>
+					.
+				</p>
+			)}
 			<p className="text-center text-sm">
 				{mode === 'signUp' ? 'Already have an account?' : 'New here?'}{' '}
 				<button
