@@ -20,19 +20,21 @@ export default function Home() {
 			<Suspense fallback={<BowlingGameSkeleton />}>
 				<BowlingGame />
 			</Suspense>
-			<footer className="text-center text-sm text-muted-foreground">
-				By{' '}
-				<a href="https://tweeres.ca" className="text-foreground underline">
-					Tyler Weeres
-				</a>
-				{' · '}
-				<Link href="/privacy" className="text-foreground underline">
-					Privacy
-				</Link>
-				{' · '}
-				<Link href="/terms" className="text-foreground underline">
-					Terms
-				</Link>
+			<footer className="space-y-1 text-center text-sm text-muted-foreground">
+				<p>
+					By{' '}
+					<a href="https://tweeres.ca" className="text-foreground underline">
+						Tyler Weeres
+					</a>
+				</p>
+				<p className="space-x-5">
+					<Link href="/privacy" className="text-foreground underline">
+						Privacy
+					</Link>
+					<Link href="/terms" className="text-foreground underline">
+						Terms
+					</Link>
+				</p>
 			</footer>
 		</main>
 	)
