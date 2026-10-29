@@ -105,10 +105,13 @@ export function AwaySummary({
 										Away bowling maxes out at {AWAY_CAP_HOURS} hours, so check
 										back before then to keep it going.
 									</p>
-									<AwayCapNotifications
-										vapidPublicKey={vapidPublicKey}
-										onlyOfferWhenOff
-									/>
+									{/* One next step at a time: making an account comes first */}
+									{isLoggedIn && (
+										<AwayCapNotifications
+											vapidPublicKey={vapidPublicKey}
+											onlyOfferWhenOff
+										/>
+									)}
 								</>
 							)}
 							<RewardList>
