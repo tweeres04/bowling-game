@@ -14,9 +14,12 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
 	event.notification.close()
 	event.waitUntil(
-		self.clients.matchAll({ type: 'window' }).then((windows) => {
-			const open = windows[0]
-			return open ? open.focus() : self.clients.openWindow('/')
-		}),
+		Promise.all([
+			self.clients.matchAll({ type: 'window' }).then((windows) => {
+				const open = windows[0]
+				return open ? open.focus() : self.clients.openWindow('/')
+			}),
+			fetch('/notification-tapped', { method: 'POST' }),
+		]),
 	)
 })

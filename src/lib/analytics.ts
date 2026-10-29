@@ -24,6 +24,12 @@ export async function trackEvent(
 	mixpanel.track(event, { distinct_id: playerId, ip, ...properties })
 }
 
+// For events outside a player's request, like the away cap check, so there's
+// no IP to pass. Mixpanel leaves their location blank.
+export function trackBackgroundEvent(playerId: string, event: string) {
+	mixpanel?.track(event, { distinct_id: playerId })
+}
+
 // Current state on the player's profile, like levels and focus
 export async function setPlayerProfile(
 	playerId: string,

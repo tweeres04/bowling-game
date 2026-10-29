@@ -3,6 +3,7 @@ import { and, eq, gt, lte } from 'drizzle-orm'
 import webpush, { WebPushError } from 'web-push'
 import { db } from '@/db'
 import { players, pushSubscriptions } from '@/db/schema'
+import { trackBackgroundEvent } from '@/lib/analytics'
 import { AWAY_CAP_HOURS, AWAY_CAP_MS } from '@/lib/progression'
 
 export const CAP_CHECK_INTERVAL_MS = 5 * 60 * 1000
@@ -39,6 +40,7 @@ export async function notifyPlayersAtAwayCap(now: Date) {
 	const capReachedBy = now.getTime() - AWAY_CAP_MS
 	const atCap = await db
 		.select({
+			playerId: pushSubscriptions.playerId,
 			endpoint: pushSubscriptions.endpoint,
 			subscription: pushSubscriptions.subscription,
 		})
@@ -56,11 +58,12 @@ export async function notifyPlayersAtAwayCap(now: Date) {
 		body: `You've been away ${AWAY_CAP_HOURS} hours, so you've stopped earning shots. Come see how your games went!`,
 	})
 	await Promise.all(
-		atCap.map(async ({ endpoint, subscription }) => {
+		atCap.map(async ({ playerId, endpoint, subscription }) => {
 			try {
 				await webpush.sendNotification(subscription, payload, {
 					vapidDetails,
 				})
+				trackBackgroundEvent(playerId, 'away_cap_notification_sent')
 			} catch (error) {
 				// The browser dropped the subscription, so stop sending to it
 				if (
