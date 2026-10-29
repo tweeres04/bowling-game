@@ -84,7 +84,7 @@ export function ShotControls({
 							</Button>
 						</form>
 					) : (
-						<ShootButton onShoot={stopAuto} />
+						<ShootButton stopAuto={stopAuto} />
 					)}
 				</div>
 				<Button

@@ -10,8 +10,8 @@ import {
 } from '@/lib/progression'
 
 // Shoots on press and keeps shooting while held. The form action still works
-// without JavaScript. onShoot runs once per press, not per held shot.
-export function ShootButton({ onShoot }: { onShoot: () => void }) {
+// without JavaScript. stopAuto runs once per press, not per held shot.
+export function ShootButton({ stopAuto }: { stopAuto: () => void }) {
 	const [coolingDown, setCoolingDown] = useState(false)
 	// Held shots are further apart than the tap cooldown, so the button stays
 	// disabled for the whole hold instead of flickering between shots
@@ -35,7 +35,7 @@ export function ShootButton({ onShoot }: { onShoot: () => void }) {
 	function shootWhileHeld(event: React.PointerEvent) {
 		// Only the main button, so right-clicking doesn't shoot
 		if (event.button !== 0) return
-		onShoot()
+		stopAuto()
 		setHolding(true)
 		shootAndCoolDown()
 		const timer = setInterval(shootAndCoolDown, HELD_SHOT_INTERVAL_MS)
@@ -54,7 +54,7 @@ export function ShootButton({ onShoot }: { onShoot: () => void }) {
 			action={shoot}
 			onSubmit={(event) => {
 				event.preventDefault()
-				onShoot()
+				stopAuto()
 				shootAndCoolDown()
 			}}
 		>
