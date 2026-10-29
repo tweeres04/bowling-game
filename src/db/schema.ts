@@ -1,4 +1,5 @@
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import type { PushSubscription } from 'web-push'
 
 export const players = sqliteTable('players', {
 	id: text()
@@ -52,6 +53,19 @@ export const sessions = sqliteTable('sessions', {
 	playerId: text()
 		.notNull()
 		.references(() => players.id),
+	createdAt: integer({ mode: 'timestamp' })
+		.notNull()
+		.$defaultFn(() => new Date()),
+})
+
+// One per browser that asked to hear when away bowling stops. The endpoint is
+// the browser's unique address on its push service.
+export const pushSubscriptions = sqliteTable('push_subscriptions', {
+	endpoint: text().primaryKey(),
+	playerId: text()
+		.notNull()
+		.references(() => players.id),
+	subscription: text({ mode: 'json' }).$type<PushSubscription>().notNull(),
 	createdAt: integer({ mode: 'timestamp' })
 		.notNull()
 		.$defaultFn(() => new Date()),

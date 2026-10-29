@@ -93,12 +93,16 @@ export async function BowlingGame() {
 					showScene={showScene}
 					sceneView={sceneView}
 					accountEmail={player.email}
+					vapidPublicKey={process.env.VAPID_PUBLIC_KEY!}
 				/>
 			</div>
 
 			<SkillLevels xp={xp} focus={player.focus} />
 			<GameStats games={recentGames} count={statsGames} />
-			<AwaySummary isLoggedIn={player.email !== null} />
+			<AwaySummary
+				isLoggedIn={player.email !== null}
+				vapidPublicKey={process.env.VAPID_PUBLIC_KEY!}
+			/>
 		</div>
 	)
 }

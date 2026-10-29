@@ -33,7 +33,8 @@ export const HELD_SHOT_INTERVAL_MS = 333
 // While you're away (tab closed, hidden, or auto mode off) you still bowl,
 // 10x slower than auto mode, for up to 4 hours
 export const AWAY_SHOT_INTERVAL_MS = AUTO_SHOT_INTERVAL_MS * 10
-export const AWAY_CAP_MS = 4 * 60 * 60 * 1000
+export const AWAY_CAP_HOURS = 4
+export const AWAY_CAP_MS = AWAY_CAP_HOURS * 60 * 60 * 1000
 
 // Share of each game's XP that goes to the area you're focusing on
 export const FOCUS_SHARE = 0.75

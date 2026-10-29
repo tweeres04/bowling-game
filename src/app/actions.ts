@@ -2,9 +2,10 @@
 
 import { eq } from 'drizzle-orm'
 import { refresh } from 'next/cache'
+import type { PushSubscription } from 'web-push'
 import { cookies } from 'next/headers'
 import { db } from '@/db'
-import { games, players } from '@/db/schema'
+import { games, players, pushSubscriptions } from '@/db/schema'
 import { isGameOver } from '@/lib/bowling'
 import {
 	awayShotsSince,
@@ -30,6 +31,7 @@ import {
 } from '@/lib/settings'
 import { SCENE_VIEWS, type SceneView } from '@/lib/scene-view'
 import { setPlayerProfile, trackEvent } from '@/lib/analytics'
+import { isPushServiceEndpoint } from '@/lib/push'
 import {
 	STATS_GAME_COUNTS,
 	summarizeGames,
@@ -234,4 +236,32 @@ export async function setSceneView(view: SceneView) {
 		sameSite: 'lax',
 	})
 	refresh()
+}
+
+// Saving by endpoint moves this browser's notifications to whoever is playing
+// on it now, after logging in or out
+export async function turnOnAwayCapPush(subscription: PushSubscription) {
+	if (!isPushServiceEndpoint(subscription.endpoint))
+		throw new Error(`Unknown push service: ${subscription.endpoint}`)
+	const player = await getOrCreatePlayer()
+	await db
+		.insert(pushSubscriptions)
+		.values({
+			endpoint: subscription.endpoint,
+			playerId: player.id,
+			subscription,
+		})
+		.onConflictDoUpdate({
+			target: pushSubscriptions.endpoint,
+			set: { playerId: player.id, subscription },
+		})
+	trackEvent(player.id, 'away_cap_notifications_toggled', { is_on: true })
+}
+
+export async function turnOffAwayCapPush(endpoint: string) {
+	const player = await getOrCreatePlayer()
+	await db
+		.delete(pushSubscriptions)
+		.where(eq(pushSubscriptions.endpoint, endpoint))
+	trackEvent(player.id, 'away_cap_notifications_toggled', { is_on: false })
 }

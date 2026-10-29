@@ -4,6 +4,7 @@ import { startTransition, useEffect, useEffectEvent, useState } from 'react'
 import { CheckIcon, CloudArrowUpIcon } from '@phosphor-icons/react'
 import { collectAwayProgress } from '@/app/actions'
 import { AccountForm } from '@/components/account-form'
+import { AwayCapNotifications } from '@/components/away-cap-notifications'
 import { Button } from '@/components/ui/button'
 import {
 	Dialog,
@@ -18,6 +19,7 @@ import { StatGrid, StatTile } from '@/components/stat-grid'
 import { formatDuration, formatNumber } from '@/lib/format'
 import type { AwaySummary as Summary } from '@/lib/play'
 import {
+	AWAY_CAP_HOURS,
 	AWAY_SHOT_INTERVAL_MS,
 	FOCUS_LABELS,
 	SKILL_AREAS,
@@ -26,7 +28,13 @@ import {
 // Collects away progress when the page opens, when you come back to it, and
 // every away interval while you're on it with auto mode off. Shows what you
 // bowled if a game finished.
-export function AwaySummary({ isLoggedIn }: { isLoggedIn: boolean }) {
+export function AwaySummary({
+	isLoggedIn,
+	vapidPublicKey,
+}: {
+	isLoggedIn: boolean
+	vapidPublicKey: string
+}) {
 	const [summary, setSummary] = useState<Summary | null>(null)
 	const [isSavingProgress, setIsSavingProgress] = useState(false)
 
@@ -92,10 +100,16 @@ export function AwaySummary({ isLoggedIn }: { isLoggedIn: boolean }) {
 								<StatTile label="Average score" value={summary.averageScore} />
 							</StatGrid>
 							{summary.capped && (
-								<p>
-									Away bowling maxes out at 4 hours, so check back before then
-									to keep it going.
-								</p>
+								<>
+									<p>
+										Away bowling maxes out at {AWAY_CAP_HOURS} hours, so check
+										back before then to keep it going.
+									</p>
+									<AwayCapNotifications
+										vapidPublicKey={vapidPublicKey}
+										onlyOfferWhenOff
+									/>
+								</>
 							)}
 							<RewardList>
 								{SKILL_AREAS.map((area) => (

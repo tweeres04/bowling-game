@@ -9,6 +9,7 @@ import {
 import { logOut } from '@/app/account-actions'
 import { setSceneView, setShowScene } from '@/app/actions'
 import { AccountForm, type AccountFormMode } from '@/components/account-form'
+import { AwayCapNotifications } from '@/components/away-cap-notifications'
 import { Button } from '@/components/ui/button'
 import {
 	Dialog,
@@ -28,10 +29,12 @@ export function SettingsDialog({
 	showScene,
 	sceneView,
 	accountEmail,
+	vapidPublicKey,
 }: {
 	showScene: boolean
 	sceneView: SceneView
 	accountEmail: string | null
+	vapidPublicKey: string
 }) {
 	// Both flip right away while the setting saves on the server
 	const [showSceneNow, setShowSceneNow] = useOptimistic(showScene)
@@ -126,6 +129,7 @@ export function SettingsDialog({
 								</>
 							)}
 						</div>
+						<AwayCapNotifications vapidPublicKey={vapidPublicKey} />
 						<label className="flex items-center justify-between gap-4">
 							<span>
 								<span className="block font-medium">
