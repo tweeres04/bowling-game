@@ -7,8 +7,13 @@ import {
 	useSyncExternalStore,
 	useTransition,
 } from 'react'
-import { PauseIcon, PlayIcon } from '@phosphor-icons/react'
-import { autoBowl, setAutoMode } from '@/app/actions'
+import {
+	ArrowCounterClockwiseIcon,
+	PauseIcon,
+	PlayIcon,
+} from '@phosphor-icons/react'
+import { autoBowl, newGame, setAutoMode } from '@/app/actions'
+import { ShootButton } from '@/components/shoot-button'
 import { Button } from '@/components/ui/button'
 import { AUTO_SHOT_INTERVAL_MS } from '@/lib/progression'
 
@@ -17,14 +22,14 @@ function subscribeToVisibility(onChange: () => void) {
 	return () => document.removeEventListener('visibilitychange', onChange)
 }
 
-// The Shoot or New game form comes in as children, with the auto mode
-// toggle beside it and its timer bar underneath
+// The Shoot or New game button, with the auto mode toggle beside it and its
+// timer bar underneath
 export function ShotControls({
 	savedAutoOn,
-	children,
+	gameOver,
 }: {
 	savedAutoOn: boolean
-	children: React.ReactNode
+	gameOver: boolean
 }) {
 	const [autoOn, setAutoOn] = useState(savedAutoOn)
 	// Auto mode pauses in a hidden tab, where away bowling takes over, and
@@ -58,10 +63,30 @@ export function ShotControls({
 		setAutoMode(on)
 	}
 
+	// Shooting by hand means you're taking over. Only saves when it was on, so
+	// manual shots don't each call the server.
+	function stopAuto() {
+		if (autoOn) toggleAuto(false)
+	}
+
 	return (
 		<div className="w-full space-y-3">
 			<div className="flex gap-2">
-				<div className="flex-1">{children}</div>
+				<div className="flex-1">
+					{gameOver ? (
+						<form action={newGame}>
+							<Button type="submit" size="lg" className="w-full">
+								<ArrowCounterClockwiseIcon
+									data-icon="inline-start"
+									weight="bold"
+								/>
+								New game
+							</Button>
+						</form>
+					) : (
+						<ShootButton onShoot={stopAuto} />
+					)}
+				</div>
 				<Button
 					size="icon-lg"
 					variant={autoOn ? 'default' : 'secondary'}

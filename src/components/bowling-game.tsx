@@ -1,8 +1,5 @@
-import {
-	ArrowCounterClockwiseIcon,
-	ChartBarHorizontalIcon,
-} from '@phosphor-icons/react/ssr'
-import { newGame, setShowOdds } from '@/app/actions'
+import { ChartBarHorizontalIcon } from '@phosphor-icons/react/ssr'
+import { setShowOdds } from '@/app/actions'
 import { AwaySummary } from '@/components/away-summary'
 import { BowlingSceneBackground } from '@/components/bowling-scene'
 import { FocusPicker } from '@/components/focus-picker'
@@ -10,7 +7,6 @@ import { MixpanelBrowser } from '@/components/mixpanel-browser'
 import { GameStats } from '@/components/game-stats'
 import { Scorecard } from '@/components/scorecard'
 import { SettingsDialog } from '@/components/settings-dialog'
-import { ShootButton } from '@/components/shoot-button'
 import { ShotControls } from '@/components/shot-controls'
 import { ShotOdds } from '@/components/shot-odds'
 import { SkillLevels } from '@/components/skill-levels'
@@ -76,21 +72,7 @@ export async function BowlingGame() {
 				<Scorecard rolls={player.rolls} />
 			</div>
 
-			<ShotControls savedAutoOn={autoMode}>
-				{gameOver ? (
-					<form action={newGame}>
-						<Button type="submit" size="lg" className="w-full">
-							<ArrowCounterClockwiseIcon
-								data-icon="inline-start"
-								weight="bold"
-							/>
-							New game
-						</Button>
-					</form>
-				) : (
-					<ShootButton />
-				)}
-			</ShotControls>
+			<ShotControls savedAutoOn={autoMode} gameOver={gameOver} />
 
 			{showOdds && (
 				<ShotOdds
