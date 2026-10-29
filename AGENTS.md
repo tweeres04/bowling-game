@@ -11,3 +11,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Analytics (Mixpanel)
 
 All tracking goes through `src/lib/analytics.ts`. Read `docs/analytics.md` before adding or changing any tracking.
+
+## Onboarding prompts
+
+Read `docs/onboarding.md` before adding or changing a prompt in the welcome back dialog.
