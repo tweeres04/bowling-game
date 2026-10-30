@@ -13,6 +13,14 @@ export function availableStatsGameCounts(totalGames: number) {
 	).slice(-3)
 }
 
+// A saved count that isn't offered anymore (smaller ones drop off as bigger
+// ones unlock) or isn't offered yet (a new player in a browser that saved
+// 500) snaps to the nearest one that is
+export function shownStatsGameCount(saved: StatsGameCount, totalGames: number) {
+	const available = availableStatsGameCounts(totalGames)
+	return available.find((count) => count >= saved) ?? available.at(-1)!
+}
+
 // How many games each point of the chart's trend line averages over. Wider
 // for more games so the line shows the trend, not every hot streak.
 export const TREND_GAMES: Record<StatsGameCount, number> = {

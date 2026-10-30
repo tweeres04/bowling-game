@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { isGameOver, pinsStandingForNextRoll } from '@/lib/bowling'
 import { mixpanelToken } from '@/lib/analytics'
 import { formatNumber } from '@/lib/format'
-import { getRecentGames } from '@/lib/game-history'
+import { countGames, getRecentGames } from '@/lib/game-history'
 import { getPlayerForDisplay, xpOf } from '@/lib/player'
 import {
 	getAutoMode,
@@ -24,9 +24,10 @@ import {
 	getStatsGames,
 } from '@/lib/settings'
 import { skillForShot } from '@/lib/progression'
+import { shownStatsGameCount } from '@/lib/stats'
 
 export async function BowlingGame() {
-	const [player, showScene, sceneView, autoMode, showOdds, statsGames] =
+	const [player, showScene, sceneView, autoMode, showOdds, savedStatsGames] =
 		await Promise.all([
 			getPlayerForDisplay(),
 			getShowScene(),
@@ -36,10 +37,14 @@ export async function BowlingGame() {
 			getStatsGames(),
 		])
 	// A visitor who hasn't bowled yet has no player row, so no games
-	const { games: recentGames, totalGames } =
+	const totalGames = 'id' in player ? await countGames(player.id) : 0
+	// Which counts are offered depends on how many games you've bowled, so
+	// the count to load waits on the total
+	const statsGames = shownStatsGameCount(savedStatsGames, totalGames)
+	const recentGames =
 		'id' in player
-			? await getRecentGames(player.id, statsGames)
-			: { games: [], totalGames: 0 }
+			? await getRecentGames(player.id, statsGames, totalGames)
+			: []
 	const xp = xpOf(player)
 	const gameOver = isGameOver(player.rolls)
 	// A finished game is saved the moment it ends, so until you start the
