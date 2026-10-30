@@ -9,8 +9,8 @@ import { formatNumber } from '@/lib/format'
 import type { RecentGame } from '@/lib/game-history'
 import {
 	SCORECARD_GAMES,
-	STATS_GAME_COUNTS,
 	TREND_GAMES,
+	availableStatsGameCounts,
 	summarizeGames,
 	type StatsGameCount,
 } from '@/lib/stats'
@@ -18,17 +18,19 @@ import {
 export function GameStats({
 	games,
 	count,
+	totalGames,
 }: {
 	// Newest first
 	games: RecentGame[]
 	count: StatsGameCount
+	totalGames: number
 }) {
 	return (
 		<section className="w-full max-w-sm">
 			<div className="mb-3 flex items-center justify-between">
 				<h2 className="text-sm font-semibold">Last {count} games</h2>
 				<div className="flex gap-1">
-					{STATS_GAME_COUNTS.map((option) => (
+					{availableStatsGameCounts(totalGames).map((option) => (
 						<form key={option} action={setStatsGames.bind(null, option)}>
 							<Button
 								type="submit"

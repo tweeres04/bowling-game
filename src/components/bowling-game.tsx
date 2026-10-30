@@ -98,7 +98,11 @@ export async function BowlingGame() {
 			</div>
 
 			<SkillLevels xp={xp} focus={player.focus} />
-			<GameStats games={recentGames} count={statsGames} />
+			<GameStats
+				games={recentGames}
+				count={statsGames}
+				totalGames={totalGames}
+			/>
 			<AwaySummary
 				isLoggedIn={player.email !== null}
 				vapidPublicKey={process.env.VAPID_PUBLIC_KEY!}

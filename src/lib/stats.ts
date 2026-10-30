@@ -1,15 +1,27 @@
 import { buildFrames } from '@/lib/bowling'
 
 // How many recent games the stats section can cover; the player picks one
-export const STATS_GAME_COUNTS = [20, 100] as const
+export const STATS_GAME_COUNTS = [20, 100, 500] as const
 export type StatsGameCount = (typeof STATS_GAME_COUNTS)[number]
+
+// Each count shows up once you've bowled more games than the one before it,
+// so a new player doesn't get a 500 option that looks the same as 20
+export function availableStatsGameCounts(totalGames: number) {
+	return STATS_GAME_COUNTS.filter(
+		(_, index) => index === 0 || totalGames > STATS_GAME_COUNTS[index - 1],
+	)
+}
 
 // How many games each point of the chart's trend line averages over. Wider
 // for more games so the line shows the trend, not every hot streak.
-export const TREND_GAMES: Record<StatsGameCount, number> = { 20: 5, 100: 10 }
+export const TREND_GAMES: Record<StatsGameCount, number> = {
+	20: 5,
+	100: 10,
+	500: 50,
+}
 
-// The scorecard list stays this long either way, so 100 doesn't make a
-// page of scorecards
+// The scorecard list stays this long whatever the count, so 500 doesn't make
+// a page of scorecards
 export const SCORECARD_GAMES = 20
 
 type GameCounts = {
