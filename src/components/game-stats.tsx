@@ -28,7 +28,14 @@ export function GameStats({
 	return (
 		<section className="w-full max-w-sm">
 			<div className="mb-3 flex items-center justify-between">
-				<h2 className="text-sm font-semibold">Last {count} games</h2>
+				{/* A count unlocks once you pass the one before it, so you can
+            pick 1000 with only 728 games. "All 0 games" would read oddly
+            next to the empty state, so that keeps "Last". */}
+				<h2 className="text-sm font-semibold">
+					{0 < totalGames && totalGames < count
+						? `All ${totalGames} games`
+						: `Last ${count} games`}
+				</h2>
 				<div className="flex gap-1">
 					{availableStatsGameCounts(totalGames).map((option) => (
 						<form key={option} action={setStatsGames.bind(null, option)}>
