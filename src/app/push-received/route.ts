@@ -5,6 +5,6 @@ import { getPlayer } from '@/lib/player'
 // requests carry the session cookie, so this is whoever plays in that browser now.
 export async function POST() {
 	const player = await getPlayer()
-	if (player) trackEvent(player.id, 'away_cap_notification_received', {})
+	if (player) trackEvent(player.id, 'notification_received', {})
 	return new Response(null, { status: 204 })
 }
