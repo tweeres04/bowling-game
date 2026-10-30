@@ -59,11 +59,13 @@ export function ShootButton({ stopAuto }: { stopAuto: () => void }) {
 			}}
 		>
 			{/* focusableWhenDisabled uses aria-disabled instead of the disabled
-          attribute, which would swallow the pointer events that end a hold */}
+          attribute, which would swallow the pointer events that end a hold.
+          touch-none stops a slight thumb wiggle from turning into a scroll,
+          which cancels the pointer and ends the hold. */}
 			<Button
 				type="submit"
 				size="lg"
-				className="w-full"
+				className="w-full touch-none"
 				disabled={coolingDown || holding}
 				focusableWhenDisabled
 				onPointerDown={shootWhileHeld}
