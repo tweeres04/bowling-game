@@ -1,21 +1,19 @@
 import { buildFrames } from '@/lib/bowling'
 
 // How many recent games the stats section can cover; the player picks one
-export const STATS_GAME_COUNTS = [20, 100, 500, 1000] as const
+export const STATS_GAME_COUNTS = [20, 100, 1000] as const
 export type StatsGameCount = (typeof STATS_GAME_COUNTS)[number]
 
 // Each count shows up once you've bowled more games than the one before it,
-// so a new player doesn't get a 500 option that looks the same as 20. Only
-// the three largest show, so smaller ones drop off as bigger ones unlock.
+// so a new player doesn't get a 1000 option that looks the same as 20
 export function availableStatsGameCounts(totalGames: number) {
 	return STATS_GAME_COUNTS.filter(
 		(_, index) => index === 0 || totalGames > STATS_GAME_COUNTS[index - 1],
-	).slice(-3)
+	)
 }
 
-// A saved count that isn't offered anymore (smaller ones drop off as bigger
-// ones unlock) or isn't offered yet (a new player in a browser that saved
-// 500) snaps to the nearest one that is
+// A saved count that isn't offered yet (a new player in a browser that saved
+// 1000) snaps to the nearest one that is
 export function shownStatsGameCount(saved: StatsGameCount, totalGames: number) {
 	const available = availableStatsGameCounts(totalGames)
 	return available.find((count) => count >= saved) ?? available.at(-1)!
@@ -26,7 +24,6 @@ export function shownStatsGameCount(saved: StatsGameCount, totalGames: number) {
 export const TREND_GAMES: Record<StatsGameCount, number> = {
 	20: 5,
 	100: 10,
-	500: 50,
 	1000: 100,
 }
 
